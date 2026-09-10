@@ -22,3 +22,7 @@ label { display: grid; gap: .35rem; color: #526b64; font-size: .82rem; font-weig
 .record-actions strong { font-size: 1.4rem; }
 .week-panel { margin-top: 1.2rem; } .week { display: grid; grid-template-columns: repeat(7,1fr); gap: .65rem; } .day { padding: .8rem; border-radius: .7rem; background: #edf6f2; } .day span,.day small { display: block; } .day strong { display: block; margin: .35rem 0; } .day.over { background: #fff0e3; color: #863f19; } .empty { color: #70877f; padding: 2rem; text-align: center; }
 @media (max-width: 820px) { #app { padding: 1rem; } .layout { grid-template-columns: 1fr; } .summary { grid-template-columns: 1fr 1fr; } .week { grid-template-columns: repeat(2,1fr); } .hero { align-items: start; } .filter-group { flex-direction: column; align-items: stretch; } }
+
+.modal { position: fixed; inset: 0; background: rgba(24,48,43,0.4); display: flex; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(4px); }
+.modal-content { background: #fff; padding: 2rem; border-radius: 1.4rem; width: 100%; max-width: 500px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+.modal-content h2 { margin-bottom: 1.5rem; }

@@ -136,7 +136,7 @@ function render() {
                     <button class="ghost" onclick="editRecord('${entry.item.id}')">Edit</button>
                     <button class="ghost danger" onclick="deleteRecord('${entry.item.id}')">Delete</button>
                   </div>
-                  <strong>${entry.item.status === 'done' ? '✓' : entry.score}</strong>
+                  <strong onclick="toggleStatus('${entry.item.id}')" style="cursor:pointer" title="Toggle Complete">${entry.item.status === 'done' ? '✓' : entry.score}</strong>
                 </div>
               </div>
             `).join("")}
@@ -156,6 +156,46 @@ function render() {
           </div>
         </div>
       </main>
+    </div>
+
+    <div id="edit-modal" class="modal" style="display: none">
+      <div class="modal-content">
+        <h2>Edit ${theme.itemLabel}</h2>
+        <form id="edit-form">
+          <input type="hidden" name="id">
+          <label>${theme.itemLabel}</label>
+          <input type="text" name="title" required>
+          <div class="form-grid">
+            <div>
+              <label>${theme.dateLabel}</label>
+              <input type="date" name="dueDate" required>
+            </div>
+            <div>
+              <label>Category</label>
+              <select name="category">
+                ${theme.categories.map(c => `<option value="${c}">${c}</option>`).join("")}
+              </select>
+            </div>
+          </div>
+          <div class="form-grid">
+            <div>
+              <label>${theme.effortLabel}</label>
+              <input type="number" name="effort" min="1" max="480" required>
+            </div>
+            <div>
+              <label>${theme.impactLabel}</label>
+              <input type="number" name="impact" min="1" max="5" required>
+            </div>
+          </div>
+          <label>Notes</label>
+          <textarea name="notes"></textarea>
+          <div id="edit-form-errors" class="errors"></div>
+          <div class="form-actions">
+            <button type="submit">Save Changes</button>
+            <button type="button" class="ghost" onclick="closeModal()">Cancel</button>
+          </div>
+        </form>
+      </div>
     </div>
   `;
 
@@ -201,6 +241,47 @@ function setupEventListeners(records: readonly LifeRecord[]) {
     };
   }
 
+  const editForm = document.getElementById("edit-form") as HTMLFormElement;
+  if (editForm) {
+    editForm.onsubmit = (e) => {
+      e.preventDefault();
+      const fd = new FormData(editForm);
+      const data = Object.fromEntries(fd.entries());
+      const id = data.id as string;
+      
+      const records = store.all();
+      const original = records.find(r => r.id === id);
+      if (!original) return;
+
+      const record: Partial<LifeRecord> = {
+        title: data.title as string,
+        category: data.category as string,
+        dueDate: data.dueDate as string,
+        effort: Number(data.effort),
+        impact: Number(data.impact),
+      };
+
+      const errors = validateRecord(record, theme);
+      if (errors.length > 0) {
+        const errDiv = document.getElementById("edit-form-errors");
+        if (errDiv) errDiv.textContent = errors[0];
+        return;
+      }
+
+      store.upsert({
+        ...original,
+        title: record.title!,
+        category: record.category!,
+        dueDate: record.dueDate!,
+        effort: record.effort!,
+        impact: record.impact!,
+        notes: data.notes as string,
+        updatedAt: new Date().toISOString(),
+      });
+      closeModal();
+    };
+  }
+
   document.getElementById("btn-export-json")?.addEventListener("click", () => {
     download("backup.json", exportJson(records), "application/json");
   });
@@ -237,6 +318,33 @@ function setupEventListeners(records: readonly LifeRecord[]) {
 }
 
 (window as any).editRecord = (id: string) => {
+  const records = store.all();
+  const item = records.find(r => r.id === id);
+  if (!item) return;
+  
+  const modal = document.getElementById("edit-modal");
+  const form = document.getElementById("edit-form") as HTMLFormElement;
+  if (!modal || !form) return;
+
+  const fd = new FormData(form);
+  // Manual set because form is empty
+  (form.elements.namedItem("id") as HTMLInputElement).value = item.id;
+  (form.elements.namedItem("title") as HTMLInputElement).value = item.title;
+  (form.elements.namedItem("dueDate") as HTMLInputElement).value = item.dueDate;
+  (form.elements.namedItem("category") as HTMLSelectElement).value = item.category;
+  (form.elements.namedItem("effort") as HTMLInputElement).value = String(item.effort);
+  (form.elements.namedItem("impact") as HTMLInputElement).value = String(item.impact);
+  (form.elements.namedItem("notes") as HTMLTextAreaElement).value = item.notes;
+
+  modal.style.display = "flex";
+};
+
+(window as any).closeModal = () => {
+  const modal = document.getElementById("edit-modal");
+  if (modal) modal.style.display = "none";
+};
+
+(window as any).toggleStatus = (id: string) => {
   const records = store.all();
   const item = records.find(r => r.id === id);
   if (!item) return;
