@@ -117,7 +117,10 @@ function render() {
                   <p>${entry.reasons.join(", ")} • Due ${entry.item.dueDate}</p>
                 </div>
                 <div class="record-actions">
-                  <button class="ghost" onclick="editRecord('${entry.item.id}')">Edit</button>
+                  <div class="actions-inner">
+                    <button class="ghost" onclick="editRecord('${entry.item.id}')">Edit</button>
+                    <button class="ghost danger" onclick="deleteRecord('${entry.item.id}')">Delete</button>
+                  </div>
                   <strong>${entry.item.status === 'done' ? '✓' : entry.score}</strong>
                 </div>
               </div>
@@ -216,6 +219,12 @@ function setupEventListeners(records: readonly LifeRecord[]) {
   if (!item) return;
   const newStatus = item.status === "done" ? "planned" : "done";
   store.upsert({ ...item, status: newStatus, updatedAt: new Date().toISOString() });
+};
+
+(window as any).deleteRecord = (id: string) => {
+  if (confirm("Are you sure you want to delete this item?")) {
+    store.remove(id);
+  }
 };
 
 store.subscribe(render);
