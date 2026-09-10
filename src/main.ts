@@ -21,12 +21,26 @@ const store = new RecordStore(`pca_data_${theme.id}`, theme.seeds.map(([title, c
 const app = document.getElementById("app");
 if (!app) throw new Error("App root not found");
 
+// State for UI filters
+const uiState = {
+  showCompleted: false,
+  searchQuery: "",
+};
+
 function render() {
   const records = store.all();
   const today = localDay();
   const plan = buildPlan(records, today);
   const stats = summarize(records, today);
   const schedule = suggestDailyLoad(records, 120, today);
+
+  // Apply filters
+  const filteredPlan = plan.filter(entry => {
+    const matchesStatus = uiState.showCompleted || entry.item.status !== "done";
+    const matchesSearch = entry.item.title.toLowerCase().includes(uiState.searchQuery.toLowerCase()) ||
+                          entry.item.category.toLowerCase().includes(uiState.searchQuery.toLowerCase());
+    return matchesStatus && matchesSearch;
+  });
 
   app.innerHTML = `
     <header class="hero">
@@ -101,15 +115,16 @@ function render() {
           <div class="panel-title">
             <h2>Active Plan</h2>
             <div class="filter-group">
+              <input type="text" id="search-input" placeholder="Search..." value="${uiState.searchQuery}" style="width: 120px; margin-right: 0.5rem">
               <label class="checkbox-label">
-                <input type="checkbox" id="toggle-done">
+                <input type="checkbox" id="toggle-done" ${uiState.showCompleted ? 'checked' : ''}>
                 <span>Show Completed</span>
               </label>
             </div>
           </div>
           <div id="record-list">
-            ${plan.length === 0 ? '<div class="empty">No active tasks planned.</div>' : ''}
-            ${plan.map(entry => `
+            ${filteredPlan.length === 0 ? '<div class="empty">No items matching filters.</div>' : ''}
+            ${filteredPlan.map(entry => `
               <div class="record ${entry.item.status === 'done' ? 'is-done' : ''}">
                 <div>
                   <div class="badge">${entry.item.category}</div>
@@ -210,7 +225,15 @@ function setupEventListeners(records: readonly LifeRecord[]) {
     reader.readAsText(file);
   });
 
-  document.getElementById("toggle-done")?.addEventListener("change", () => render());
+  document.getElementById("toggle-done")?.addEventListener("change", (e) => {
+    uiState.showCompleted = (e.target as HTMLInputElement).checked;
+    render();
+  });
+
+  document.getElementById("search-input")?.addEventListener("input", (e) => {
+    uiState.searchQuery = (e.target as HTMLInputElement).value;
+    render();
+  });
 }
 
 (window as any).editRecord = (id: string) => {
