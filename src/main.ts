@@ -120,10 +120,11 @@ function render() {
                 <input type="checkbox" id="toggle-done" ${uiState.showCompleted ? 'checked' : ''}>
                 <span>Show Completed</span>
               </label>
+              ${stats.completed > 0 ? `<button class="ghost danger" id="btn-clear-done" style="font-size: 0.7rem; padding: 0.4rem 0.7rem">Clear Done</button>` : ''}
             </div>
           </div>
           <div id="record-list">
-            ${filteredPlan.length === 0 ? '<div class="empty">No items matching filters.</div>' : ''}
+            ${filteredPlan.length === 0 ? '<div class="empty">✨ No items matching filters. <br><small>Time to relax or add a new care item!</small></div>' : ''}
             ${filteredPlan.map(entry => `
               <div class="record ${entry.item.status === 'done' ? 'is-done' : ''}">
                 <div>
@@ -317,6 +318,13 @@ function setupEventListeners(records: readonly LifeRecord[]) {
   document.getElementById("search-input")?.addEventListener("input", (e) => {
     uiState.searchQuery = (e.target as HTMLInputElement).value;
     render();
+  });
+
+  document.getElementById("btn-clear-done")?.addEventListener("click", () => {
+    if (confirm("Permanently delete all completed items?")) {
+      const remaining = records.filter(r => r.status !== "done");
+      store.replace(remaining);
+    }
   });
 }
 
