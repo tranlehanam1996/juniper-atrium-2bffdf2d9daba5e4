@@ -17,7 +17,12 @@ label { display: grid; gap: .35rem; color: #526b64; font-size: .82rem; font-weig
 .record { display: flex; justify-content: space-between; gap: 1rem; padding: 1rem 0; border-top: 1px solid #e5ece8; }
 .record.is-done { opacity: 0.8; }
 .record:first-child { border-top: 0; } .record h3 { margin-top: .4rem; } .record p { margin: .3rem 0 0; color: #698078; font-size: .86rem; }
-.badge { display: inline-flex; padding: .22rem .5rem; border-radius: 99px; background: #e4f0eb; color: #176b55; font-size: .7rem; font-weight: 800; } .record-actions { display: grid; grid-template-columns: auto 50px; gap: 1rem; align-items: center; text-align: right; }
+.badge-group { display: flex; gap: 0.4rem; }
+.badge { display: inline-flex; padding: .22rem .5rem; border-radius: 99px; background: #e4f0eb; color: #176b55; font-size: .7rem; font-weight: 800; }
+.status-planned { background: #eef2ff; color: #4338ca; }
+.status-active { background: #fffbeb; color: #b45309; }
+.status-done { background: #f0fdf4; color: #15803d; }
+.record-actions { display: grid; grid-template-columns: auto 50px; gap: 1rem; align-items: center; text-align: right; }
 .actions-inner { display: flex; gap: .5rem; }
 .record-actions strong { font-size: 1.4rem; }
 .week-panel { margin-top: 1.2rem; } .week { display: grid; grid-template-columns: repeat(7,1fr); gap: .65rem; } .day { padding: .8rem; border-radius: .7rem; background: #edf6f2; } .day span,.day small { display: block; } .day strong { display: block; margin: .35rem 0; } .day.over { background: #fff0e3; color: #863f19; } .empty { color: #70877f; padding: 2rem; text-align: center; }

@@ -127,8 +127,11 @@ function render() {
             ${filteredPlan.map(entry => `
               <div class="record ${entry.item.status === 'done' ? 'is-done' : ''}">
                 <div>
-                  <div class="badge">${entry.item.category}</div>
-                  <h3>${entry.item.title}</h3>
+                  <div class="badge-group">
+                    <div class="badge">${entry.item.category}</div>
+                    <div class="badge status-${entry.item.status}">${entry.item.status.charAt(0).toUpperCase() + entry.item.status.slice(1)}</div>
+                  </div>
+                  <h3 style="margin-top: 0.4rem">${entry.item.title}</h3>
                   <p>${entry.reasons.join(", ")} • Due ${entry.item.dueDate}</p>
                 </div>
                 <div class="record-actions">
