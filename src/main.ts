@@ -139,7 +139,7 @@ function render() {
                     <button class="ghost" onclick="editRecord('${entry.item.id}')">Edit</button>
                     <button class="ghost danger" onclick="deleteRecord('${entry.item.id}')">Delete</button>
                   </div>
-                  <strong onclick="toggleStatus('${entry.item.id}')" style="cursor:pointer" title="Toggle Complete">${entry.item.status === 'done' ? '✓' : entry.score}</strong>
+                  <strong onclick="toggleStatus('${entry.item.id}')" style="cursor:pointer" title="Cycle Status">${entry.item.status === 'done' ? '✓' : (entry.item.status === 'active' ? '⚡' : entry.score)}</strong>
                 </div>
               </div>
             `).join("")}
@@ -330,7 +330,6 @@ function setupEventListeners(records: readonly LifeRecord[]) {
   if (!modal || !form) return;
 
   const fd = new FormData(form);
-  // Manual set because form is empty
   (form.elements.namedItem("id") as HTMLInputElement).value = item.id;
   (form.elements.namedItem("title") as HTMLInputElement).value = item.title;
   (form.elements.namedItem("dueDate") as HTMLInputElement).value = item.dueDate;
@@ -351,7 +350,14 @@ function setupEventListeners(records: readonly LifeRecord[]) {
   const records = store.all();
   const item = records.find(r => r.id === id);
   if (!item) return;
-  const newStatus = item.status === "done" ? "planned" : "done";
+  
+  const statusCycle: Record<ItemStatus, ItemStatus> = {
+    planned: "active",
+    active: "done",
+    done: "planned",
+  };
+  
+  const newStatus = statusCycle[item.status];
   store.upsert({ ...item, status: newStatus, updatedAt: new Date().toISOString() });
 };
 
