@@ -134,6 +134,9 @@ function render() {
               ${stats.completed > 0 ? `<button class="ghost danger" id="btn-clear-done" style="font-size: 0.7rem; padding: 0.4rem 0.7rem">Clear Done</button>` : ''}
             </div>
           </div>
+          
+          ${filteredPlan.length > 0 && !uiState.showCompleted ? `<div style="margin-bottom: 1rem; text-align: right"><button class="ghost" id="btn-bulk-done" style="font-size: 0.7rem; padding: 0.4rem 0.7rem">Mark Filtered as Done</button></div>` : ''}
+
           <div id="record-list">
             ${filteredPlan.length === 0 ? '<div class="empty">✨ No items matching filters. <br><small>Time to relax or add a new care item!</small></div>' : ''}
             ${filteredPlan.map(entry => `
@@ -369,6 +372,29 @@ function setupEventListeners(records: readonly LifeRecord[]) {
   document.getElementById("btn-clear-all")?.addEventListener("click", () => {
     if (confirm("Permanently delete ALL care items? This cannot be undone.")) {
       store.replace([]);
+    }
+  });
+
+  document.getElementById("btn-bulk-done")?.addEventListener("click", () => {
+    const today = localDay();
+    const plan = buildPlan(records, today);
+    const filteredItems = plan.filter(entry => {
+      const matchesStatus = uiState.showCompleted || entry.item.status !== "done";
+      const matchesSearch = entry.item.title.toLowerCase().includes(uiState.searchQuery.toLowerCase()) ||
+                            entry.item.category.toLowerCase().includes(uiState.searchQuery.toLowerCase());
+      const matchesCategory = uiState.categoryFilter === "all" || entry.item.category === uiState.categoryFilter;
+      return matchesStatus && matchesSearch && matchesCategory;
+    }).map(e => e.item);
+
+    if (filteredItems.length === 0) return;
+
+    if (confirm(`Mark ${filteredItems.length} item(s) as done?`)) {
+      const all = store.all();
+      const idsToMark = new Set(filteredItems.map(i => i.id));
+      const updated = all.map(item => 
+        idsToMark.has(item.id) ? { ...item, status: "done" as ItemStatus, updatedAt: new Date().toISOString() } : item
+      );
+      store.replace(updated);
     }
   });
 }
