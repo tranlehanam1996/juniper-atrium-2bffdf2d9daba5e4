@@ -25,6 +25,7 @@ if (!app) throw new Error("App root not found");
 const uiState = {
   showCompleted: false,
   searchQuery: "",
+  categoryFilter: "all",
 };
 
 function render() {
@@ -39,7 +40,8 @@ function render() {
     const matchesStatus = uiState.showCompleted || entry.item.status !== "done";
     const matchesSearch = entry.item.title.toLowerCase().includes(uiState.searchQuery.toLowerCase()) ||
                           entry.item.category.toLowerCase().includes(uiState.searchQuery.toLowerCase());
-    return matchesStatus && matchesSearch;
+    const matchesCategory = uiState.categoryFilter === "all" || entry.item.category === uiState.categoryFilter;
+    return matchesStatus && matchesSearch && matchesCategory;
   });
 
   app.innerHTML = `
@@ -121,6 +123,10 @@ function render() {
             <h2>Active Plan</h2>
             <div class="filter-group">
               <input type="text" id="search-input" placeholder="Search..." value="${uiState.searchQuery}" style="width: 120px; margin-right: 0.5rem">
+              <select id="category-filter" style="width: 110px; margin-right: 0.5rem">
+                <option value="all" ${uiState.categoryFilter === 'all' ? 'selected' : ''}>All Categories</option>
+                ${theme.categories.map(c => `<option value="${c}" ${uiState.categoryFilter === c ? 'selected' : ''}>${c}</option>`).join("")}
+              </select>
               <label class="checkbox-label">
                 <input type="checkbox" id="toggle-done" ${uiState.showCompleted ? 'checked' : ''}>
                 <span>Show Completed</span>
@@ -150,6 +156,7 @@ function render() {
               </div>
             `).join("")}
           </div>
+          ${records.length > 0 ? `<div style="margin-top: 1.5rem; text-align: right"><button class="ghost danger" id="btn-clear-all" style="font-size: 0.7rem; padding: 0.4rem 0.7rem">Clear All Records</button></div>` : ''}
         </div>
 
         <div class="week-panel panel">
@@ -347,10 +354,21 @@ function setupEventListeners(records: readonly LifeRecord[]) {
     render();
   });
 
+  document.getElementById("category-filter")?.addEventListener("change", (e) => {
+    uiState.categoryFilter = (e.target as HTMLSelectElement).value;
+    render();
+  });
+
   document.getElementById("btn-clear-done")?.addEventListener("click", () => {
     if (confirm("Permanently delete all completed items?")) {
       const remaining = records.filter(r => r.status !== "done");
       store.replace(remaining);
+    }
+  });
+
+  document.getElementById("btn-clear-all")?.addEventListener("click", () => {
+    if (confirm("Permanently delete ALL care items? This cannot be undone.")) {
+      store.replace([]);
     }
   });
 }
