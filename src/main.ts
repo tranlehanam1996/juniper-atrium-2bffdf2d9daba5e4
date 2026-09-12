@@ -99,6 +99,11 @@ function render() {
           </div>
         </form>
 
+        <div class="panel-title" style="margin-top: 1.5rem"><h2>Quick-Add</h2></div>
+        <div class="exchange" style="flex-wrap: wrap">
+          ${theme.categories.map(c => `<button class="ghost q-add" data-category="${c}">${c}</button>`).join("")}
+        </div>
+
         <div class="panel-title" style="margin-top: 2rem"><h2>Data</h2></div>
         <div class="exchange">
           <button class="ghost" id="btn-export-json">JSON</button>
@@ -245,6 +250,28 @@ function setupEventListeners(records: readonly LifeRecord[]) {
     };
   }
 
+  document.querySelectorAll(".q-add").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const category = (btn as HTMLElement).dataset.category;
+      if (!category) return;
+      const title = prompt(`Quick add ${theme.itemLabel} for ${category}:`);
+      if (!title?.trim()) return;
+      
+      store.upsert({
+        id: crypto.randomUUID(),
+        title: title.trim(),
+        category: category,
+        dueDate: localDay(),
+        effort: 30,
+        impact: 3,
+        status: "planned",
+        notes: "Quickly added",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+    });
+  });
+
   const editForm = document.getElementById("edit-form") as HTMLFormElement;
   if (editForm) {
     editForm.onsubmit = (e) => {
@@ -337,7 +364,6 @@ function setupEventListeners(records: readonly LifeRecord[]) {
   const form = document.getElementById("edit-form") as HTMLFormElement;
   if (!modal || !form) return;
 
-  const fd = new FormData(form);
   (form.elements.namedItem("id") as HTMLInputElement).value = item.id;
   (form.elements.namedItem("title") as HTMLInputElement).value = item.title;
   (form.elements.namedItem("dueDate") as HTMLInputElement).value = item.dueDate;
@@ -370,7 +396,11 @@ function setupEventListeners(records: readonly LifeRecord[]) {
 };
 
 (window as any).deleteRecord = (id: string) => {
-  if (confirm("Are you sure you want to delete this item?")) {
+  const records = store.all();
+  const item = records.find(r => r.id === id);
+  if (!item) return;
+
+  if (confirm(`Are you sure you want to delete "${item.title}"?`)) {
     store.remove(id);
   }
 };
