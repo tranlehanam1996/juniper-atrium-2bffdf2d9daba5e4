@@ -68,6 +68,8 @@ function render() {
     filteredPlan.sort((a, b) => b.score - a.score || a.item.dueDate.localeCompare(b.item.dueDate));
   }
 
+  const completionRate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
+
   app.innerHTML = `
     <header class="hero">
       <div>
@@ -87,6 +89,13 @@ function render() {
       <article><span>Completed</span><strong>${stats.completed}</strong></article>
       <article><span>Overdue</span><strong>${stats.overdue}</strong></article>
       <article><span>Effort</span><strong>${stats.effort}m</strong></article>
+    </div>
+
+    <div class="progress-container" style="margin: -1.2rem 0 1.2rem 0">
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" style="width: ${completionRate}%"></div>
+        <span class="progress-label">${completionRate}% Completed</span>
+      </div>
     </div>
 
     <div class="layout">
