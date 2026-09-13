@@ -71,6 +71,14 @@ function render() {
   const completionRate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
   const totalEffortAll = records.reduce((sum, r) => sum + r.effort, 0);
 
+  // Calculate effort per category for the current filtered set
+  const filteredEffortByCategory: Record<string, number> = {};
+  filteredPlan.forEach(entry => {
+    if (entry.item.status !== "done") {
+      filteredEffortByCategory[entry.item.category] = (filteredEffortByCategory[entry.item.category] ?? 0) + entry.item.effort;
+    }
+  });
+
   app.innerHTML = `
     <header class="hero">
       <div>
@@ -180,7 +188,7 @@ function render() {
           <div id="record-list">
             ${filteredPlan.length === 0 ? '<div class="empty">✨ No items matching filters. <br><small>Time to relax or add a new care item!</small></div>' : ''}
             ${filteredPlan.map(entry => `
-              <div class="record ${entry.item.status === 'done' ? 'is-done' : ''}">
+              <div class="record ${entry.item.status === 'done' ? 'is-done' : ''} ${entry.daysUntilDue < 0 && entry.item.status !== 'done' ? 'is-overdue' : ''}">
                 <div>
                   <div class="badge-group">
                     <div class="badge">${highlightMatch(entry.item.category, uiState.searchQuery)}</div>
@@ -199,6 +207,18 @@ function render() {
               </div>
             `).join("")}
           </div>
+          
+          ${Object.keys(filteredEffortByCategory).length > 0 ? `
+            <div class="category-breakdown">
+              ${Object.entries(filteredEffortByCategory).map(([cat, eff]) => `
+                <div class="breakdown-item">
+                  <span>${cat}</span>
+                  <strong>${eff}m</strong>
+                </div>
+              `).join("")}
+            </div>
+          ` : ''}
+
           ${records.length > 0 ? `<div style="margin-top: 1.5rem; text-align: right"><button class="ghost danger" id="btn-clear-all" style="font-size: 0.7rem; padding: 0.4rem 0.7rem">Clear All Records</button></div>` : ''}
         </div>
 
