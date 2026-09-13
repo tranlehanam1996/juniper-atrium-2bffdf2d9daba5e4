@@ -199,6 +199,7 @@ function render() {
                 </div>
                 <div class="record-actions">
                   <div class="actions-inner">
+                    <button class="ghost" onclick="duplicateRecord('${entry.item.id}')">Clone</button>
                     <button class="ghost" onclick="editRecord('${entry.item.id}')">Edit</button>
                     <button class="ghost danger" onclick="deleteRecord('${entry.item.id}')">Delete</button>
                   </div>
@@ -524,6 +525,21 @@ function setupEventListeners(records: readonly LifeRecord[]) {
   if (confirm(`Are you sure you want to delete "${item.title}"?`)) {
     store.remove(id);
   }
+};
+
+(window as any).duplicateRecord = (id: string) => {
+  const records = store.all();
+  const item = records.find(r => r.id === id);
+  if (!item) return;
+
+  store.upsert({
+    ...item,
+    id: crypto.randomUUID(),
+    title: `${item.title} (Copy)`,
+    status: "planned",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
 };
 
 store.subscribe(render);
