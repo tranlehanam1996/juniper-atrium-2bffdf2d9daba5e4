@@ -27,6 +27,7 @@ const uiState = {
   searchQuery: "",
   categoryFilter: "all",
   sortBy: "priority",
+  dailyCapacity: 120,
 };
 
 function render() {
@@ -34,7 +35,7 @@ function render() {
   const today = localDay();
   const plan = buildPlan(records, today);
   const stats = summarize(records, today);
-  const schedule = suggestDailyLoad(records, 120, today);
+  const schedule = suggestDailyLoad(records, uiState.dailyCapacity, today);
 
   // Apply filters
   let filteredPlan = plan.filter(entry => {
@@ -179,7 +180,13 @@ function render() {
         </div>
 
         <div class="week-panel panel">
-          <div class="panel-title"><h2>7-Day Forecast</h2></div>
+          <div class="panel-title">
+            <h2>7-Day Forecast</h2>
+            <div class="filter-group" style="font-size: 0.8rem">
+              <label style="margin: 0; white-space: nowrap">Daily Capacity (m):</label>
+              <input type="number" id="capacity-input" value="${uiState.dailyCapacity}" style="width: 60px; padding: 0.2rem">
+            </div>
+          </div>
           <div class="week">
             ${schedule.map(day => `
               <div class="day ${day.overloaded ? 'over' : ''}">
@@ -380,6 +387,12 @@ function setupEventListeners(records: readonly LifeRecord[]) {
 
   document.getElementById("sort-select")?.addEventListener("change", (e) => {
     uiState.sortBy = (e.target as HTMLSelectElement).value;
+    render();
+  });
+
+  document.getElementById("capacity-input")?.addEventListener("input", (e) => {
+    const val = parseInt((e.target as HTMLInputElement).value);
+    uiState.dailyCapacity = isNaN(val) ? 120 : Math.max(1, val);
     render();
   });
 
