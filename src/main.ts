@@ -26,6 +26,7 @@ const uiState = {
   showCompleted: false,
   searchQuery: "",
   categoryFilter: "all",
+  sortBy: "priority",
 };
 
 function render() {
@@ -36,13 +37,23 @@ function render() {
   const schedule = suggestDailyLoad(records, 120, today);
 
   // Apply filters
-  const filteredPlan = plan.filter(entry => {
+  let filteredPlan = plan.filter(entry => {
     const matchesStatus = uiState.showCompleted || entry.item.status !== "done";
     const matchesSearch = entry.item.title.toLowerCase().includes(uiState.searchQuery.toLowerCase()) ||
                           entry.item.category.toLowerCase().includes(uiState.searchQuery.toLowerCase());
     const matchesCategory = uiState.categoryFilter === "all" || entry.item.category === uiState.categoryFilter;
     return matchesStatus && matchesSearch && matchesCategory;
   });
+
+  // Apply sorting
+  if (uiState.sortBy === "date") {
+    filteredPlan.sort((a, b) => a.item.dueDate.localeCompare(b.item.dueDate));
+  } else if (uiState.sortBy === "title") {
+    filteredPlan.sort((a, b) => a.item.title.localeCompare(b.item.title));
+  } else {
+    // Default priority sorting is already handled by buildPlan, but we re-apply to be safe after filter
+    filteredPlan.sort((a, b) => b.score - a.score || a.item.dueDate.localeCompare(b.item.dueDate));
+  }
 
   app.innerHTML = `
     <header class="hero">
@@ -126,6 +137,11 @@ function render() {
               <select id="category-filter" style="width: 110px; margin-right: 0.5rem">
                 <option value="all" ${uiState.categoryFilter === 'all' ? 'selected' : ''}>All Categories</option>
                 ${theme.categories.map(c => `<option value="${c}" ${uiState.categoryFilter === c ? 'selected' : ''}>${c}</option>`).join("")}
+              </select>
+              <select id="sort-select" style="width: 110px; margin-right: 0.5rem">
+                <option value="priority" ${uiState.sortBy === 'priority' ? 'selected' : ''}>Priority</option>
+                <option value="date" ${uiState.sortBy === 'date' ? 'selected' : ''}>Date</option>
+                <option value="title" ${uiState.sortBy === 'title' ? 'selected' : ''}>Title</option>
               </select>
               <label class="checkbox-label">
                 <input type="checkbox" id="toggle-done" ${uiState.showCompleted ? 'checked' : ''}>
@@ -359,6 +375,11 @@ function setupEventListeners(records: readonly LifeRecord[]) {
 
   document.getElementById("category-filter")?.addEventListener("change", (e) => {
     uiState.categoryFilter = (e.target as HTMLSelectElement).value;
+    render();
+  });
+
+  document.getElementById("sort-select")?.addEventListener("change", (e) => {
+    uiState.sortBy = (e.target as HTMLSelectElement).value;
     render();
   });
 
