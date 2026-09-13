@@ -69,6 +69,7 @@ function render() {
   }
 
   const completionRate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
+  const totalEffortAll = records.reduce((sum, r) => sum + r.effort, 0);
 
   app.innerHTML = `
     <header class="hero">
@@ -88,7 +89,8 @@ function render() {
       <article><span>Total</span><strong>${stats.total}</strong></article>
       <article><span>Completed</span><strong>${stats.completed}</strong></article>
       <article><span>Overdue</span><strong>${stats.overdue}</strong></article>
-      <article><span>Effort</span><strong>${stats.effort}m</strong></article>
+      <article><span>Active Effort</span><strong>${stats.effort}m</strong></article>
+      <article><span>Global Effort</span><strong>${totalEffortAll}m</strong></article>
     </div>
 
     <div class="progress-container" style="margin: -1.2rem 0 1.2rem 0">

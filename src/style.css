@@ -6,7 +6,7 @@ button:hover, .file:hover { filter: brightness(.94); } .ghost { color: #176b55; 
 .hero h1 { font-size: clamp(2.2rem,6vw,4.6rem); margin: .15rem 0; letter-spacing: -.055em; } .hero p { max-width: 650px; opacity: .84; margin-bottom: 0; }
 .eyebrow { text-transform: uppercase; letter-spacing: .14em; font-size: .72rem; font-weight: 800; opacity: .72; } .revision { min-width: 100px; padding: 1rem; text-align: center; border: 1px solid #ffffff38; border-radius: 1rem; background: #ffffff12; }
 .revision span,.revision small { display: block; opacity: .72; } .revision strong { display: block; font-size: 2rem; }
-.summary { display: grid; grid-template-columns: repeat(4,1fr); gap: 1rem; margin: 1.2rem 0; } .summary article,.panel { background: #fff; border: 1px solid #dce7e1; border-radius: 1rem; box-shadow: 0 8px 24px #173c340c; }
+.summary { display: grid; grid-template-columns: repeat(5,1fr); gap: 1rem; margin: 1.2rem 0; } .summary article,.panel { background: #fff; border: 1px solid #dce7e1; border-radius: 1rem; box-shadow: 0 8px 24px #173c340c; }
 .summary article { padding: 1rem 1.2rem; } .summary span { display: block; color: #668078; font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; } .summary strong { font-size: 1.8rem; }
 .progress-bar-bg { background: #dce7e1; height: 12px; border-radius: 6px; position: relative; overflow: hidden; }
 .progress-bar-fill { background: #176b55; height: 100%; transition: width 0.4s ease-out; }
