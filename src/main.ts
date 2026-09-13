@@ -30,6 +30,19 @@ const uiState = {
   dailyCapacity: 120,
 };
 
+function highlightMatch(text: string, query: string): string {
+  if (!query) return text;
+  const regex = new RegExp(`(${query})`, "gi");
+  return text.replace(regex, "<mark class=\"search-highlight\">$1</mark>");
+}
+
+function getPriorityColor(score: number): string {
+  if (score >= 100) return "#9a3434";
+  if (score >= 60) return "#b45309";
+  if (score >= 30) return "#176b55";
+  return "inherit";
+}
+
 function render() {
   const records = store.all();
   const today = localDay();
@@ -52,7 +65,6 @@ function render() {
   } else if (uiState.sortBy === "title") {
     filteredPlan.sort((a, b) => a.item.title.localeCompare(b.item.title));
   } else {
-    // Default priority sorting is already handled by buildPlan, but we re-apply to be safe after filter
     filteredPlan.sort((a, b) => b.score - a.score || a.item.dueDate.localeCompare(b.item.dueDate));
   }
 
@@ -160,10 +172,10 @@ function render() {
               <div class="record ${entry.item.status === 'done' ? 'is-done' : ''}">
                 <div>
                   <div class="badge-group">
-                    <div class="badge">${entry.item.category}</div>
+                    <div class="badge">${highlightMatch(entry.item.category, uiState.searchQuery)}</div>
                     <div class="badge status-${entry.item.status}">${entry.item.status.charAt(0).toUpperCase() + entry.item.status.slice(1)}</div>
                   </div>
-                  <h3 style="margin-top: 0.4rem">${entry.item.title}</h3>
+                  <h3 style="margin-top: 0.4rem">${highlightMatch(entry.item.title, uiState.searchQuery)}</h3>
                   <p>${entry.reasons.join(", ")} • Due ${entry.item.dueDate}</p>
                 </div>
                 <div class="record-actions">
@@ -171,7 +183,7 @@ function render() {
                     <button class="ghost" onclick="editRecord('${entry.item.id}')">Edit</button>
                     <button class="ghost danger" onclick="deleteRecord('${entry.item.id}')">Delete</button>
                   </div>
-                  <strong onclick="toggleStatus('${entry.item.id}')" style="cursor:pointer" title="Cycle Status">${entry.item.status === 'done' ? '✓' : (entry.item.status === 'active' ? '⚡' : entry.score)}</strong>
+                  <strong onclick="toggleStatus('${entry.item.id}')" style="cursor:pointer; color: ${getPriorityColor(entry.score)}" title="Cycle Status">${entry.item.status === 'done' ? '✓' : (entry.item.status === 'active' ? '⚡' : entry.score)}</strong>
                 </div>
               </div>
             `).join("")}

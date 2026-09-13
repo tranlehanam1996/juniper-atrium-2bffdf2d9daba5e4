@@ -31,3 +31,4 @@ label { display: grid; gap: .35rem; color: #526b64; font-size: .82rem; font-weig
 .modal { position: fixed; inset: 0; background: rgba(24,48,43,0.4); display: flex; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(4px); }
 .modal-content { background: #fff; padding: 2rem; border-radius: 1.4rem; width: 100%; max-width: 500px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
 .modal-content h2 { margin-bottom: 1.5rem; }
+.search-highlight { background: #ffeb3b; color: #000; border-radius: 2px; }
