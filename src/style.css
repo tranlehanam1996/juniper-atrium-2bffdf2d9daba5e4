@@ -40,3 +40,5 @@ label { display: grid; gap: .35rem; color: #526b64; font-size: .82rem; font-weig
 .modal-content { background: #fff; padding: 2rem; border-radius: 1.4rem; width: 100%; max-width: 500px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
 .modal-content h2 { margin-bottom: 1.5rem; }
 .search-highlight { background: #ffeb3b; color: #000; border-radius: 2px; }
+
+#capacity-input { font-weight: 700; color: #176b55; border-color: #176b55; text-align: center; }
