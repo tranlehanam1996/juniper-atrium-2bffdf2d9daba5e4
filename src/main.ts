@@ -287,6 +287,7 @@ function render() {
           <div id="edit-form-errors" class="errors"></div>
           <div class="form-actions">
             <button type="submit">Save Changes</button>
+            <button type="button" class="ghost" onclick="duplicateFromEdit()">Duplicate</button>
             <button type="button" class="ghost" onclick="closeModal()">Cancel</button>
           </div>
         </form>
@@ -566,6 +567,28 @@ function setupEventListeners(records: readonly LifeRecord[]) {
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   });
+};
+
+(window as any).duplicateFromEdit = () => {
+  const form = document.getElementById("edit-form") as HTMLFormElement;
+  if (!form) return;
+  const id = (form.elements.namedItem("id") as HTMLInputElement).value;
+  if (!id) return;
+  
+  const records = store.all();
+  const item = records.find(r => r.id === id);
+  if (!item) return;
+
+  store.upsert({
+    ...item,
+    id: crypto.randomUUID(),
+    title: `${item.title} (Copy)`,
+    status: "planned",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+  
+  closeModal();
 };
 
 store.subscribe(render);
