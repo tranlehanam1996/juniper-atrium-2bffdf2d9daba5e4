@@ -186,9 +186,12 @@ function render() {
             </div>
           </div>
           
-          <div class="bulk-actions" style="margin-bottom: 1rem; display: flex; justify-content: flex-end; gap: 0.5rem">
-            ${filteredPlan.length > 0 && !uiState.showCompleted ? `<button class="ghost" id="btn-bulk-done" style="font-size: 0.7rem; padding: 0.4rem 0.7rem">Mark Filtered as Done</button>` : ''}
-            ${stats.overdue > 0 ? `<button class="ghost danger" id="btn-clear-overdue" style="font-size: 0.7rem; padding: 0.4rem 0.7rem">Reset Overdue Dates</button>` : ''}
+          <div class="bulk-actions" style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center">
+            <small style="color: #668078">Showing ${filteredPlan.length} of ${plan.length} active items</small>
+            <div style="display: flex; gap: 0.5rem">
+              ${filteredPlan.length > 0 && !uiState.showCompleted ? `<button class="ghost" id="btn-bulk-done" style="font-size: 0.7rem; padding: 0.4rem 0.7rem">Mark Filtered as Done</button>` : ''}
+              ${stats.overdue > 0 ? `<button class="ghost danger" id="btn-clear-overdue" style="font-size: 0.7rem; padding: 0.4rem 0.7rem">Reset Overdue Dates</button>` : ''}
+            </div>
           </div>
 
           <div id="record-list">

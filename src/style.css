@@ -17,7 +17,8 @@ label { display: grid; gap: .35rem; color: #526b64; font-size: .82rem; font-weig
 .filter-group { display: flex; align-items: center; gap: 0.5rem; }
 .checkbox-label { display: flex; align-items: center; gap: 0.3rem; cursor: pointer; }
 .checkbox-label input { width: auto; cursor: pointer; }
-.record { display: flex; justify-content: space-between; gap: 1rem; padding: 1rem 0; border-top: 1px solid #e5ece8; }
+.record { display: flex; justify-content: space-between; gap: 1rem; padding: 1rem 0; border-top: 1px solid #e5ece8; transition: background 0.2s ease; }
+.record:hover { background: #f9fbf9; }
 .record.is-done { opacity: 0.8; }
 .record.is-overdue { border-left: 4px solid #9a3434; padding-left: 0.6rem; }
 .record:first-child { border-top: 0; } .record h3 { margin-top: .4rem; } .record p { margin: .3rem 0 0; color: #698078; font-size: .86rem; }
