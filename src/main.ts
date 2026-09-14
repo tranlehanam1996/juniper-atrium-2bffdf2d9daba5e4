@@ -183,13 +183,16 @@ function render() {
             </div>
           </div>
           
-          ${filteredPlan.length > 0 && !uiState.showCompleted ? `<div style="margin-bottom: 1rem; text-align: right"><button class="ghost" id="btn-bulk-done" style="font-size: 0.7rem; padding: 0.4rem 0.7rem">Mark Filtered as Done</button></div>` : ''}
+          <div class="bulk-actions" style="margin-bottom: 1rem; display: flex; justify-content: flex-end; gap: 0.5rem">
+            ${filteredPlan.length > 0 && !uiState.showCompleted ? `<button class="ghost" id="btn-bulk-done" style="font-size: 0.7rem; padding: 0.4rem 0.7rem">Mark Filtered as Done</button>` : ''}
+            ${stats.overdue > 0 ? `<button class="ghost danger" id="btn-clear-overdue" style="font-size: 0.7rem; padding: 0.4rem 0.7rem">Reset Overdue Dates</button>` : ''}
+          </div>
 
           <div id="record-list">
             ${filteredPlan.length === 0 ? '<div class="empty">✨ No items matching filters. <br><small>Time to relax or add a new care item!</small></div>' : ''}
             ${filteredPlan.map(entry => `
               <div class="record ${entry.item.status === 'done' ? 'is-done' : ''} ${entry.daysUntilDue < 0 && entry.item.status !== 'done' ? 'is-overdue' : ''}">
-                <div>
+                <div style="flex: 1">
                   <div class="badge-group">
                     <div class="badge">${highlightMatch(entry.item.category, uiState.searchQuery)}</div>
                     <div class="badge status-${entry.item.status}">${entry.item.status.charAt(0).toUpperCase() + entry.item.status.slice(1)}</div>
@@ -471,6 +474,23 @@ function setupEventListeners(records: readonly LifeRecord[]) {
       const idsToMark = new Set(filteredItems.map(i => i.id));
       const updated = all.map(item => 
         idsToMark.has(item.id) ? { ...item, status: "done" as ItemStatus, updatedAt: new Date().toISOString() } : item
+      );
+      store.replace(updated);
+    }
+  });
+
+  document.getElementById("btn-clear-overdue")?.addEventListener("click", () => {
+    const today = localDay();
+    const all = store.all();
+    const overdueItems = all.filter(r => r.status !== "done" && r.dueDate < today);
+    
+    if (overdueItems.length === 0) return;
+
+    if (confirm(`Move ${overdueItems.length} overdue item(s) to today?`)) {
+      const updated = all.map(item => 
+        (item.status !== "done" && item.dueDate < today) 
+          ? { ...item, dueDate: today, updatedAt: new Date().toISOString() } 
+          : item
       );
       store.replace(updated);
     }
