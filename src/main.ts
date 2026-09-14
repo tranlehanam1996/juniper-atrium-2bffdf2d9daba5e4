@@ -71,6 +71,9 @@ function render() {
   const completionRate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
   const totalEffortAll = records.reduce((sum, r) => sum + r.effort, 0);
 
+  // Visual cue for active effort vs capacity
+  const effortColor = stats.effort > uiState.dailyCapacity * 3 ? "#9a3434" : (stats.effort > uiState.dailyCapacity ? "#b45309" : "inherit");
+
   // Calculate effort per category for the current filtered set
   const filteredEffortByCategory: Record<string, number> = {};
   filteredPlan.forEach(entry => {
@@ -97,7 +100,7 @@ function render() {
       <article><span>Total</span><strong>${stats.total}</strong></article>
       <article><span>Completed</span><strong>${stats.completed}</strong></article>
       <article><span>Overdue</span><strong>${stats.overdue}</strong></article>
-      <article><span>Active Effort</span><strong>${stats.effort}m</strong></article>
+      <article><span>Active Effort</span><strong style="color: ${effortColor}">${stats.effort}m</strong></article>
       <article><span>Global Effort</span><strong>${totalEffortAll}m</strong></article>
     </div>
 
