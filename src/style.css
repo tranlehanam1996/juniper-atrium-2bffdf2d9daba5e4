@@ -21,6 +21,7 @@ label { display: grid; gap: .35rem; color: #526b64; font-size: .82rem; font-weig
 .record:hover { background: #f9fbf9; }
 .record.is-done { opacity: 0.8; }
 .record.is-overdue { border-left: 4px solid #9a3434; padding-left: 0.6rem; }
+.record.is-pinned { background: #fffcf0; border-left: 4px solid #b45309; padding-left: 0.6rem; }
 .record:first-child { border-top: 0; } .record h3 { margin-top: .4rem; } .record p { margin: .3rem 0 0; color: #698078; font-size: .86rem; }
 .badge-group { display: flex; gap: 0.4rem; }
 .badge { display: inline-flex; padding: .22rem .5rem; border-radius: 99px; background: #e4f0eb; color: #176b55; font-size: .7rem; font-weight: 800; }
@@ -29,7 +30,7 @@ label { display: grid; gap: .35rem; color: #526b64; font-size: .82rem; font-weig
 .status-done { background: #f0fdf4; color: #15803d; }
 .record-actions { display: grid; grid-template-columns: auto 50px; gap: 1rem; align-items: center; text-align: right; }
 .actions-inner { display: flex; gap: .5rem; }
-.record-actions strong { font-size: 1.4rem; }
+.status-toggle { background: transparent; color: inherit; font-size: 1.4rem; font-weight: bold; cursor: pointer; border: none; padding: 0; }
 .week-panel { margin-top: 1.2rem; } .week { display: grid; grid-template-columns: repeat(7,1fr); gap: .65rem; } .day { padding: .8rem; border-radius: .7rem; background: #edf6f2; } .day span,.day small { display: block; } .day strong { display: block; margin: .35rem 0; } .day.over { background: #fff0e3; color: #863f19; } .empty { color: #70877f; padding: 2rem; text-align: center; }
 .category-breakdown { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #e5ece8; }
 .breakdown-item { font-size: 0.75rem; color: #668078; display: flex; gap: 0.3rem; align-items: center; }

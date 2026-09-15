@@ -65,7 +65,10 @@ function render() {
   } else if (uiState.sortBy === "title") {
     filteredPlan.sort((a, b) => a.item.title.localeCompare(b.item.title));
   } else {
-    filteredPlan.sort((a, b) => b.score - a.score || a.item.dueDate.localeCompare(b.item.dueDate));
+    filteredPlan.sort((a, b) => {
+      if (a.item.pinned !== b.item.pinned) return a.item.pinned ? -1 : 1;
+      return b.score - a.score || a.item.dueDate.localeCompare(b.item.dueDate);
+    });
   }
 
   const completionRate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
@@ -197,7 +200,7 @@ function render() {
           <div id="record-list">
             ${filteredPlan.length === 0 ? '<div class="empty">✨ No items matching filters. <br><small>Time to relax or add a new care item!</small></div>' : ''}
             ${filteredPlan.map(entry => `
-              <div class="record ${entry.item.status === 'done' ? 'is-done' : ''} ${entry.daysUntilDue < 0 && entry.item.status !== 'done' ? 'is-overdue' : ''}">
+              <div class="record ${entry.item.status === 'done' ? 'is-done' : ''} ${entry.daysUntilDue < 0 && entry.item.status !== 'done' ? 'is-overdue' : ''} ${entry.item.pinned ? 'is-pinned' : ''}">
                 <div style="flex: 1">
                   <div class="badge-group">
                     <div class="badge">${highlightMatch(entry.item.category, uiState.searchQuery)}</div>
@@ -208,11 +211,12 @@ function render() {
                 </div>
                 <div class="record-actions">
                   <div class="actions-inner">
+                    <button class="ghost" onclick="togglePin('${entry.item.id}')" title="Pin to Top">${entry.item.pinned ? '📍' : '📌'}</button>
                     <button class="ghost" onclick="duplicateRecord('${entry.item.id}')">Clone</button>
                     <button class="ghost" onclick="editRecord('${entry.item.id}')">Edit</button>
                     <button class="ghost danger" onclick="deleteRecord('${entry.item.id}')">Delete</button>
                   </div>
-                  <strong onclick="toggleStatus('${entry.item.id}')" style="cursor:pointer; color: ${getPriorityColor(entry.score)}" title="Cycle Status">${entry.item.status === 'done' ? '✓' : (entry.item.status === 'active' ? '⚡' : entry.score)}</strong>
+                  <button class="status-toggle" onclick="toggleStatus('${entry.item.id}')" style="color: ${getPriorityColor(entry.score)}" title="Cycle Status (Enter)">${entry.item.status === 'done' ? '✓' : (entry.item.status === 'active' ? '⚡' : entry.score)}</button>
                 </div>
               </div>
             `).join("")}
@@ -544,6 +548,14 @@ function setupEventListeners(records: readonly LifeRecord[]) {
   store.upsert({ ...item, status: newStatus, updatedAt: new Date().toISOString() });
 };
 
+(window as any).togglePin = (id: string) => {
+  const records = store.all();
+  const item = records.find(r => r.id === id);
+  if (!item) return;
+  
+  store.upsert({ ...item, pinned: !item.pinned, updatedAt: new Date().toISOString() });
+};
+
 (window as any).deleteRecord = (id: string) => {
   const records = store.all();
   const item = records.find(r => r.id === id);
@@ -564,6 +576,7 @@ function setupEventListeners(records: readonly LifeRecord[]) {
     id: crypto.randomUUID(),
     title: `${item.title} (Copy)`,
     status: "planned",
+    pinned: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   });
@@ -584,6 +597,7 @@ function setupEventListeners(records: readonly LifeRecord[]) {
     id: crypto.randomUUID(),
     title: `${item.title} (Copy)`,
     status: "planned",
+    pinned: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   });
