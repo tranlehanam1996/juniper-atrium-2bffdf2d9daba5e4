@@ -28,6 +28,7 @@ const uiState = {
   categoryFilter: "all",
   sortBy: "priority",
   dailyCapacity: 120,
+  focusMode: false,
 };
 
 function highlightMatch(text: string, query: string): string {
@@ -56,6 +57,12 @@ function render() {
     const matchesSearch = entry.item.title.toLowerCase().includes(uiState.searchQuery.toLowerCase()) ||
                           entry.item.category.toLowerCase().includes(uiState.searchQuery.toLowerCase());
     const matchesCategory = uiState.categoryFilter === "all" || entry.item.category === uiState.categoryFilter;
+    
+    if (uiState.focusMode) {
+      // Focus mode: only items with high priority or overdue
+      return matchesStatus && matchesSearch && matchesCategory && (entry.score >= 60 || entry.daysUntilDue < 0);
+    }
+    
     return matchesStatus && matchesSearch && matchesCategory;
   });
 
@@ -86,11 +93,11 @@ function render() {
   });
 
   app.innerHTML = `
-    <header class="hero">
+    <header class="hero ${uiState.focusMode ? 'is-focus' : ''}">
       <div>
-        <div class="eyebrow">${theme.product}</div>
-        <h1>${theme.product}</h1>
-        <p>${theme.tagline}</p>
+        <div class="eyebrow">${theme.product} ${uiState.focusMode ? '• Focus Mode' : ''}</div>
+        <h1 style="${uiState.focusMode ? 'font-size: 2.5rem' : ''}">${theme.product}</h1>
+        <p>${uiState.focusMode ? 'Concentrating on high-priority care items.' : theme.tagline}</p>
       </div>
       <div class="revision">
         <span>Revision</span>
@@ -99,7 +106,7 @@ function render() {
       </div>
     </header>
 
-    <div class="summary">
+    <div class="summary ${uiState.focusMode ? 'hide-focus' : ''}">
       <article><span>Total</span><strong>${stats.total}</strong></article>
       <article><span>Completed</span><strong>${stats.completed}</strong></article>
       <article><span>Overdue</span><strong>${stats.overdue}</strong></article>
@@ -107,15 +114,15 @@ function render() {
       <article><span>Global Effort</span><strong>${totalEffortAll}m</strong></article>
     </div>
 
-    <div class="progress-container" style="margin: -1.2rem 0 1.2rem 0">
+    <div class="progress-container ${uiState.focusMode ? 'hide-focus' : ''}" style="margin: -1.2rem 0 1.2rem 0">
       <div class="progress-bar-bg">
         <div class="progress-bar-fill" style="width: ${completionRate}%"></div>
         <span class="progress-label">${completionRate}% Completed</span>
       </div>
     </div>
 
-    <div class="layout">
-      <aside class="panel">
+    <div class="layout ${uiState.focusMode ? 'is-focus' : ''}">
+      <aside class="panel ${uiState.focusMode ? 'hide-focus' : ''}">
         <div class="panel-title"><h2>Add ${theme.itemLabel}</h2></div>
         <form id="add-form">
           <label>${theme.itemLabel}</label>
@@ -169,7 +176,7 @@ function render() {
       <main>
         <div class="panel">
           <div class="panel-title">
-            <h2>Active Plan</h2>
+            <h2>${uiState.focusMode ? 'High Priority Focus' : 'Active Plan'}</h2>
             <div class="filter-group">
               <input type="text" id="search-input" placeholder="Search..." value="${uiState.searchQuery}" style="width: 120px; margin-right: 0.5rem">
               <select id="category-filter" style="width: 110px; margin-right: 0.5rem">
@@ -184,6 +191,10 @@ function render() {
               <label class="checkbox-label">
                 <input type="checkbox" id="toggle-done" ${uiState.showCompleted ? 'checked' : ''}>
                 <span>Show Completed</span>
+              </label>
+              <label class="checkbox-label" style="margin-left: 0.5rem">
+                <input type="checkbox" id="toggle-focus" ${uiState.focusMode ? 'checked' : ''}>
+                <span style="color: #b45309; font-weight: 800">Focus Mode</span>
               </label>
               ${stats.completed > 0 ? `<button class="ghost danger" id="btn-clear-done" style="font-size: 0.7rem; padding: 0.4rem 0.7rem">Clear Done</button>` : ''}
             </div>
@@ -237,7 +248,7 @@ function render() {
           ${records.length > 0 ? `<div style="margin-top: 1.5rem; text-align: right"><button class="ghost danger" id="btn-clear-all" style="font-size: 0.7rem; padding: 0.4rem 0.7rem">Clear All Records</button></div>` : ''}
         </div>
 
-        <div class="week-panel panel">
+        <div class="week-panel panel ${uiState.focusMode ? 'hide-focus' : ''}">
           <div class="panel-title">
             <h2>7-Day Forecast</h2>
             <div class="filter-group" style="font-size: 0.8rem">
@@ -431,6 +442,11 @@ function setupEventListeners(records: readonly LifeRecord[]) {
 
   document.getElementById("toggle-done")?.addEventListener("change", (e) => {
     uiState.showCompleted = (e.target as HTMLInputElement).checked;
+    render();
+  });
+
+  document.getElementById("toggle-focus")?.addEventListener("change", (e) => {
+    uiState.focusMode = (e.target as HTMLInputElement).checked;
     render();
   });
 

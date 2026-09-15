@@ -43,3 +43,7 @@ label { display: grid; gap: .35rem; color: #526b64; font-size: .82rem; font-weig
 .search-highlight { background: #ffeb3b; color: #000; border-radius: 2px; }
 
 #capacity-input { font-weight: 700; color: #176b55; border-color: #176b55; text-align: center; }
+
+.hero.is-focus { background: linear-gradient(135deg,#173c34,#112a25); }
+.layout.is-focus { grid-template-columns: 1fr; }
+.hide-focus { display: none !important; }
