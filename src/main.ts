@@ -194,6 +194,7 @@ function render() {
             <div style="display: flex; gap: 0.5rem">
               ${filteredPlan.length > 0 && !uiState.showCompleted ? `<button class="ghost" id="btn-bulk-done" style="font-size: 0.7rem; padding: 0.4rem 0.7rem">Mark Filtered as Done</button>` : ''}
               ${stats.overdue > 0 ? `<button class="ghost danger" id="btn-clear-overdue" style="font-size: 0.7rem; padding: 0.4rem 0.7rem">Reset Overdue Dates</button>` : ''}
+              ${(stats.completed > 0 || stats.overdue > 0) ? `<button class="ghost" id="btn-quick-reset" style="font-size: 0.7rem; padding: 0.4rem 0.7rem">Quick Reset</button>` : ''}
             </div>
           </div>
 
@@ -503,6 +504,21 @@ function setupEventListeners(records: readonly LifeRecord[]) {
           ? { ...item, dueDate: today, updatedAt: new Date().toISOString() } 
           : item
       );
+      store.replace(updated);
+    }
+  });
+
+  document.getElementById("btn-quick-reset")?.addEventListener("click", () => {
+    const today = localDay();
+    if (confirm("Quick Reset: Clear all completed items and move all overdue items to today?")) {
+      const all = store.all();
+      const updated = all
+        .filter(r => r.status !== "done")
+        .map(item => 
+          (item.dueDate < today) 
+            ? { ...item, dueDate: today, updatedAt: new Date().toISOString() } 
+            : item
+        );
       store.replace(updated);
     }
   });
