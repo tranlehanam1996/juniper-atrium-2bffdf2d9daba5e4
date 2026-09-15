@@ -526,6 +526,7 @@ function setupEventListeners(records: readonly LifeRecord[]) {
   (form.elements.namedItem("notes") as HTMLTextAreaElement).value = item.notes;
 
   modal.style.display = "flex";
+  (form.elements.namedItem("title") as HTMLInputElement).focus();
 };
 
 (window as any).closeModal = () => {
@@ -604,5 +605,14 @@ function setupEventListeners(records: readonly LifeRecord[]) {
   
   closeModal();
 };
+
+window.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeModal();
+  if (e.key === "n" && document.activeElement.tagName !== "INPUT" && document.activeElement.tagName !== "TEXTAREA") {
+    e.preventDefault();
+    const titleInput = document.querySelector("#add-form input[name='title']") as HTMLInputElement;
+    if (titleInput) titleInput.focus();
+  }
+});
 
 store.subscribe(render);
