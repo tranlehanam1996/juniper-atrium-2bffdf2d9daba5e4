@@ -40,7 +40,7 @@ function getPriorityColor(score: number): string {
   if (score >= 100) return "#9a3434";
   if (score >= 60) return "#b45309";
   if (score >= 30) return "#176b55";
-  return "inherit";
+  return "#668078";
 }
 
 function render() {
