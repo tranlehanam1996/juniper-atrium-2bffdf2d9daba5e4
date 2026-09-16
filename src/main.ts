@@ -94,10 +94,17 @@ function render() {
 
   app.innerHTML = `
     <header class="hero ${uiState.focusMode ? 'is-focus' : ''}">
-      <div>
-        <div class="eyebrow">${theme.product} ${uiState.focusMode ? '• Focus Mode' : ''}</div>
-        <h1 style="${uiState.focusMode ? 'font-size: 2.5rem' : ''}">${theme.product}</h1>
-        <p>${uiState.focusMode ? 'Concentrating on high-priority care items.' : theme.tagline}</p>
+      <div style="display: flex; gap: 2rem; align-items: end">
+        <div>
+          <div class="eyebrow">${theme.product} ${uiState.focusMode ? '• Focus Mode' : ''}</div>
+          <h1 style="${uiState.focusMode ? 'font-size: 2.5rem' : ''}">${theme.product}</h1>
+          <p>${uiState.focusMode ? 'Concentrating on high-priority care items.' : theme.tagline}</p>
+        </div>
+        <div class="hero-stats">
+          <div class="stat-chip"><span>Overdue</span><strong>${stats.overdue}</strong></div>
+          <div class="stat-chip"><span>Active</span><strong>${stats.total - stats.completed}</strong></div>
+          <div class="stat-chip"><span>Done</span><strong>${stats.completed}</strong></div>
+        </div>
       </div>
       <div class="revision">
         <span>Revision</span>
@@ -221,7 +228,7 @@ function render() {
                     <div class="badge">${highlightMatch(entry.item.category, uiState.searchQuery)}</div>
                     <div class="badge status-${entry.item.status}">${entry.item.status.charAt(0).toUpperCase() + entry.item.status.slice(1)}</div>
                     ${entry.item.pinned ? '<div class="badge is-pinned">📍 Pinned</div>' : ''}
-                    ${entry.daysUntilDue < 0 && entry.item.status !== 'done' ? '<div class="badge is-overdue">⚠️ Overdue</div>' : ''}
+                    ${entry.daysUntilDue < 0 && entry.item.status !== 'done' ? '<div class="badge is-urgency">🔥 Urgent</div>' : ''}
                   </div>
                   <h3 style="margin-top: 0.4rem">${highlightMatch(entry.item.title, uiState.searchQuery)}</h3>
                   <p>${entry.reasons.join(", ")} • Due ${entry.item.dueDate}</p>
