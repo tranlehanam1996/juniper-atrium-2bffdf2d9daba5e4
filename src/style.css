@@ -28,6 +28,8 @@ label { display: grid; gap: .35rem; color: #526b64; font-size: .82rem; font-weig
 .status-planned { background: #eef2ff; color: #4338ca; }
 .status-active { background: #fffbeb; color: #b45309; }
 .status-done { background: #f0fdf4; color: #15803d; }
+.badge.is-pinned { background: #fffbeb; color: #b45309; }
+.badge.is-overdue { background: #fef2f2; color: #9a3434; }
 .record-actions { display: grid; grid-template-columns: auto 50px; gap: 1rem; align-items: center; text-align: right; }
 .actions-inner { display: flex; gap: .5rem; }
 .status-toggle { background: transparent; color: inherit; font-size: 1.4rem; font-weight: bold; cursor: pointer; border: none; padding: 0; }

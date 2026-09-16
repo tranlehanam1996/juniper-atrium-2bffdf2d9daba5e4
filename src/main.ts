@@ -217,6 +217,8 @@ function render() {
                   <div class="badge-group">
                     <div class="badge">${highlightMatch(entry.item.category, uiState.searchQuery)}</div>
                     <div class="badge status-${entry.item.status}">${entry.item.status.charAt(0).toUpperCase() + entry.item.status.slice(1)}</div>
+                    ${entry.item.pinned ? '<div class="badge is-pinned">📍 Pinned</div>' : ''}
+                    ${entry.daysUntilDue < 0 && entry.item.status !== 'done' ? '<div class="badge is-overdue">⚠️ Overdue</div>' : ''}
                   </div>
                   <h3 style="margin-top: 0.4rem">${highlightMatch(entry.item.title, uiState.searchQuery)}</h3>
                   <p>${entry.reasons.join(", ")} • Due ${entry.item.dueDate}</p>
@@ -487,7 +489,12 @@ function setupEventListeners(records: readonly LifeRecord[]) {
 
   document.getElementById("btn-clear-all")?.addEventListener("click", () => {
     if (confirm("Permanently delete ALL care items? This cannot be undone.")) {
-      store.replace([]);
+      const confirmation = prompt("To confirm, please type 'DELETE ALL' below:");
+      if (confirmation === "DELETE ALL") {
+        store.replace([]);
+      } else {
+        alert("Deletion cancelled. Confirmation text did not match.");
+      }
     }
   });
 
