@@ -3,7 +3,7 @@ import { RecordStore } from "./core/store";
 import { localDay, buildPlan, summarize, suggestDailyLoad, validateRecord } from "./core/planner";
 import { exportJson, exportCsv, importJson, download } from "./core/exchange";
 import { revisionLedger } from "./generated/revision-ledger";
-import type { LifeRecord } from "./types";
+import type { LifeRecord, ItemStatus } from "./types";
 
 const store = new RecordStore(`pca_data_${theme.id}`, theme.seeds.map(([title, category, effort, impact]) => ({
   id: crypto.randomUUID(),
@@ -298,7 +298,13 @@ function render() {
               <input type="number" name="impact" min="1" max="5" required>
             </div>
           </div>
-          <label>Notes</label>
+          <label>Status</label>
+          <select name="status">
+            <option value="planned">Planned</option>
+            <option value="active">Active</option>
+            <option value="done">Done</option>
+          </select>
+          <label style="margin-top: 0.75rem">Notes</label>
           <textarea name="notes"></textarea>
           <div id="edit-form-errors" class="errors"></div>
           <div class="form-actions">
@@ -409,6 +415,7 @@ function setupEventListeners(records: readonly LifeRecord[]) {
         dueDate: record.dueDate!,
         effort: record.effort!,
         impact: record.impact!,
+        status: data.status as ItemStatus,
         notes: data.notes as string,
         updatedAt: new Date().toISOString(),
       });
@@ -555,6 +562,7 @@ function setupEventListeners(records: readonly LifeRecord[]) {
   (form.elements.namedItem("category") as HTMLSelectElement).value = item.category;
   (form.elements.namedItem("effort") as HTMLInputElement).value = String(item.effort);
   (form.elements.namedItem("impact") as HTMLInputElement).value = String(item.impact);
+  (form.elements.namedItem("status") as HTMLSelectElement).value = item.status;
   (form.elements.namedItem("notes") as HTMLTextAreaElement).value = item.notes;
 
   modal.style.display = "flex";
