@@ -14,6 +14,13 @@ export interface LifeRecord {
   pinned?: boolean;
 }
 
+export interface CareTemplate {
+  readonly title: string;
+  readonly category: string;
+  readonly effort: number;
+  readonly impact: number;
+}
+
 export interface ThemeConfig {
   readonly id: string;
   readonly product: string;
@@ -23,6 +30,7 @@ export interface ThemeConfig {
   readonly effortLabel: string;
   readonly impactLabel: string;
   readonly categories: readonly string[];
+  readonly templates: readonly CareTemplate[];
   readonly seeds: readonly (readonly [string, string, number, number])[];
 }
 

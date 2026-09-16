@@ -15,6 +15,13 @@ export const theme = {
     "Supplies",
     "Training"
   ],
+  "templates": [
+    { title: "Weekly Bath", category: "Grooming", effort: 45, impact: 3 },
+    { title: "Monthly Nail Trim", category: "Grooming", effort: 20, impact: 4 },
+    { title: "Daily Walk", category: "Exercise", effort: 30, impact: 5 },
+    { title: "Heartworm Meds", category: "Health", effort: 5, impact: 5 },
+    { title: "Training Session", category: "Training", effort: 15, impact: 3 }
+  ],
   "seeds": [
     [
       "Restock dry food",

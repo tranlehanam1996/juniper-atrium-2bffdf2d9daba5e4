@@ -161,6 +161,9 @@ function render() {
         <div class="exchange" style="flex-wrap: wrap">
           ${theme.categories.map(c => `<button class="ghost q-add" data-category="${c}">${c}</button>`).join("")}
         </div>
+        <div class="exchange" style="flex-wrap: wrap; margin-top: 0.5rem">
+          ${theme.templates.map((t, i) => `<button class="ghost q-template" data-index="${i}">${t.title}</button>`).join("")}
+        </div>
 
         <div class="panel-title" style="margin-top: 2rem"><h2>Data</h2></div>
         <div class="exchange">
@@ -377,6 +380,27 @@ function setupEventListeners(records: readonly LifeRecord[]) {
         impact: 3,
         status: "planned",
         notes: "Quickly added",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+    });
+  });
+
+  document.querySelectorAll(".q-template").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const index = parseInt((btn as HTMLElement).dataset.index || "0");
+      const template = theme.templates[index];
+      if (!template) return;
+      
+      store.upsert({
+        id: crypto.randomUUID(),
+        title: template.title,
+        category: template.category,
+        dueDate: localDay(),
+        effort: template.effort,
+        impact: template.impact,
+        status: "planned",
+        notes: "Added from template",
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
