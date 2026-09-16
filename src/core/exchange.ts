@@ -1,10 +1,11 @@
-import type { ItemStatus, LifeRecord, ThemeConfig } from "../types";
+import type { ItemStatus, LifeRecord, ThemeConfig, RecurrenceType } from "../types";
 
 export function exportJson(records: readonly LifeRecord[]): string {
   return JSON.stringify({ schema: 1, exportedAt: new Date().toISOString(), records }, null, 2);
 }
 
 const STATUSES: readonly ItemStatus[] = ["planned", "active", "done"];
+const RECURRENCES: readonly RecurrenceType[] = ["none", "daily", "weekly", "monthly"];
 
 function isCalendarDay(value: unknown): value is string {
   if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
@@ -17,8 +18,6 @@ function isTimestamp(value: unknown): value is string {
       !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/.test(value)) return false;
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return false;
-  // Backups emitted by this app always use UTC. Accept seconds-only input too, but compare the
-  // normalized instant so impossible dates (for example February 30) cannot roll into March.
   const canonical = value.includes(".") ? value : value.replace(/Z$/, ".000Z");
   return parsed.toISOString() === canonical;
 }
@@ -53,6 +52,10 @@ function decodeRecord(value: unknown, index: number, theme: ThemeConfig): LifeRe
   if (!isTimestamp(raw.createdAt) || !isTimestamp(raw.updatedAt)) {
     throw new Error(`Record ${index + 1} has invalid timestamps.`);
   }
+  if (raw.recurrence !== undefined && (typeof raw.recurrence !== "string" || !RECURRENCES.includes(raw.recurrence as RecurrenceType))) {
+    throw new Error(`Record ${index + 1} has an invalid recurrence value.`);
+  }
+
   return {
     id: raw.id,
     title: raw.title.trim(),
@@ -64,6 +67,7 @@ function decodeRecord(value: unknown, index: number, theme: ThemeConfig): LifeRe
     notes: raw.notes,
     createdAt: raw.createdAt,
     updatedAt: raw.updatedAt,
+    recurrence: raw.recurrence as RecurrenceType,
   };
 }
 

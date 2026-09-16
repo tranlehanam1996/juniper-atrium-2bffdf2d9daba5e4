@@ -1,4 +1,5 @@
 export type ItemStatus = "planned" | "active" | "done";
+export type RecurrenceType = "none" | "daily" | "weekly" | "monthly";
 
 export interface LifeRecord {
   id: string;
@@ -12,6 +13,7 @@ export interface LifeRecord {
   createdAt: string;
   updatedAt: string;
   pinned?: boolean;
+  recurrence?: RecurrenceType;
 }
 
 export interface CareTemplate {
@@ -19,6 +21,7 @@ export interface CareTemplate {
   readonly category: string;
   readonly effort: number;
   readonly impact: number;
+  readonly recurrence?: RecurrenceType;
 }
 
 export interface ThemeConfig {
