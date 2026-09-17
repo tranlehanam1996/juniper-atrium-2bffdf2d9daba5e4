@@ -3,7 +3,7 @@ import { RecordStore } from "./core/store";
 import { localDay, buildPlan, summarize, suggestDailyLoad, validateRecord } from "./core/planner";
 import { exportJson, exportCsv, importJson, download } from "./core/exchange";
 import { revisionLedger } from "./generated/revision-ledger";
-import type { LifeRecord, ItemStatus } from "./types";
+import type { LifeRecord, ItemStatus, RecurrenceType } from "./types";
 
 const store = new RecordStore(`pca_data_${theme.id}`, theme.seeds.map(([title, category, effort, impact]) => ({
   id: crypto.randomUUID(),
@@ -44,6 +44,24 @@ function getPriorityColor(score: number): string {
   return "#668078";
 }
 
+function calculateNextDueDate(currentDate: string, recurrence: RecurrenceType): string {
+  const date = new Date(`${currentDate}T00:00:00Z`);
+  switch (recurrence) {
+    case "daily":
+      date.setUTCDate(date.getUTCDate() + 1);
+      break;
+    case "weekly":
+      date.setUTCDate(date.getUTCDate() + 7);
+      break;
+    case "monthly":
+      date.setUTCMonth(date.getUTCMonth() + 1);
+      break;
+    default:
+      return currentDate;
+  }
+  return date.toISOString().slice(0, 10);
+}
+
 function render() {
   const records = store.all();
   const today = localDay();
@@ -59,7 +77,6 @@ function render() {
     const matchesCategory = uiState.categoryFilter === "all" || entry.item.category === uiState.categoryFilter;
     
     if (uiState.focusMode) {
-      // Focus mode: only items with high priority or overdue
       return matchesStatus && matchesSearch && matchesCategory && (entry.score >= 60 || entry.daysUntilDue < 0);
     }
     
@@ -80,11 +97,8 @@ function render() {
 
   const completionRate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
   const totalEffortAll = records.reduce((sum, r) => sum + r.effort, 0);
-
-  // Visual cue for active effort vs capacity
   const effortColor = stats.effort > uiState.dailyCapacity * 3 ? "#9a3434" : (stats.effort > uiState.dailyCapacity ? "#b45309" : "inherit");
 
-  // Calculate effort per category for the current filtered set
   const filteredEffortByCategory: Record<string, number> = {};
   filteredPlan.forEach(entry => {
     if (entry.item.status !== "done") {
@@ -156,7 +170,14 @@ function render() {
               <input type="number" name="impact" value="3" min="1" max="5" required>
             </div>
           </div>
-          <label>Notes</label>
+          <label>Recurrence</label>
+          <select name="recurrence">
+            <option value="none">None</option>
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+          </select>
+          <label style="margin-top: 0.75rem">Notes</label>
           <textarea name="notes"></textarea>
           <div id="form-errors" class="errors"></div>
           <div class="form-actions">
@@ -229,6 +250,7 @@ function render() {
                     <div class="badge status-${entry.item.status}">${entry.item.status.charAt(0).toUpperCase() + entry.item.status.slice(1)}</div>
                     ${entry.item.pinned ? '<div class="badge is-pinned">📍 Pinned</div>' : ''}
                     ${entry.daysUntilDue < 0 && entry.item.status !== 'done' ? '<div class="badge is-urgency">🔥 Urgent</div>' : ''}
+                    ${entry.item.recurrence && entry.item.recurrence !== 'none' ? `<div class="badge">🔄 ${entry.item.recurrence}</div>` : ''}
                   </div>
                   <h3 style="margin-top: 0.4rem">${highlightMatch(entry.item.title, uiState.searchQuery)}</h3>
                   <p>${entry.reasons.join(", ")} • Due ${entry.item.dueDate}</p>
@@ -316,6 +338,13 @@ function render() {
             <option value="active">Active</option>
             <option value="done">Done</option>
           </select>
+          <label style="margin-top: 0.75rem">Recurrence</label>
+          <select name="recurrence">
+            <option value="none">None</option>
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+          </select>
           <label style="margin-top: 0.75rem">Notes</label>
           <textarea name="notes"></textarea>
           <div id="edit-form-errors" class="errors"></div>
@@ -364,6 +393,7 @@ function setupEventListeners(records: readonly LifeRecord[]) {
         impact: record.impact!,
         status: "planned",
         notes: data.notes as string,
+        recurrence: data.recurrence as RecurrenceType,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
@@ -387,6 +417,7 @@ function setupEventListeners(records: readonly LifeRecord[]) {
         impact: 3,
         status: "planned",
         notes: "Quickly added",
+        recurrence: "none",
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
@@ -408,6 +439,7 @@ function setupEventListeners(records: readonly LifeRecord[]) {
         impact: template.impact,
         status: "planned",
         notes: "Added from template",
+        recurrence: template.recurrence || "none",
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
@@ -449,6 +481,7 @@ function setupEventListeners(records: readonly LifeRecord[]) {
         effort: record.effort!,
         impact: record.impact!,
         status: data.status as ItemStatus,
+        recurrence: data.recurrence as RecurrenceType,
         notes: data.notes as string,
         updatedAt: new Date().toISOString(),
       });
@@ -545,10 +578,28 @@ function setupEventListeners(records: readonly LifeRecord[]) {
     if (confirm(`Mark ${filteredItems.length} item(s) as done?`)) {
       const all = store.all();
       const idsToMark = new Set(filteredItems.map(i => i.id));
-      const updated = all.map(item => 
-        idsToMark.has(item.id) ? { ...item, status: "done" as ItemStatus, updatedAt: new Date().toISOString() } : item
-      );
-      store.replace(updated);
+      const updated: LifeRecord[] = [];
+      const newItems: LifeRecord[] = [];
+
+      all.forEach(item => {
+        if (idsToMark.has(item.id)) {
+          const doneItem = { ...item, status: "done" as ItemStatus, updatedAt: new Date().toISOString() };
+          updated.push(doneItem);
+          if (item.recurrence && item.recurrence !== "none") {
+            newItems.push({
+              ...item,
+              id: crypto.randomUUID(),
+              dueDate: calculateNextDueDate(item.dueDate, item.recurrence),
+              status: "planned" as ItemStatus,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            });
+          }
+        } else {
+          updated.push(item);
+        }
+      });
+      store.replace([...updated, ...newItems]);
     }
   });
 
@@ -601,6 +652,7 @@ function setupEventListeners(records: readonly LifeRecord[]) {
   (form.elements.namedItem("effort") as HTMLInputElement).value = String(item.effort);
   (form.elements.namedItem("impact") as HTMLInputElement).value = String(item.impact);
   (form.elements.namedItem("status") as HTMLSelectElement).value = item.status;
+  (form.elements.namedItem("recurrence") as HTMLSelectElement).value = item.recurrence || "none";
   (form.elements.namedItem("notes") as HTMLTextAreaElement).value = item.notes;
 
   modal.style.display = "flex";
@@ -624,7 +676,21 @@ function setupEventListeners(records: readonly LifeRecord[]) {
   };
   
   const newStatus = statusCycle[item.status];
-  store.upsert({ ...item, status: newStatus, updatedAt: new Date().toISOString() });
+  
+  if (newStatus === "done" && item.recurrence && item.recurrence !== "none") {
+    const nextDate = calculateNextDueDate(item.dueDate, item.recurrence);
+    store.upsert({ ...item, status: "done", updatedAt: new Date().toISOString() });
+    store.upsert({
+      ...item,
+      id: crypto.randomUUID(),
+      dueDate: nextDate,
+      status: "planned",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+  } else {
+    store.upsert({ ...item, status: newStatus, updatedAt: new Date().toISOString() });
+  }
 };
 
 (window as any).togglePin = (id: string) => {
