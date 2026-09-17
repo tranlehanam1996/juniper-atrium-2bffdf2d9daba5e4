@@ -253,7 +253,7 @@ function render() {
                       <div class="badge">${highlightMatch(entry.item.category, uiState.searchQuery)}</div>
                       <div class="badge status-${entry.item.status}">${entry.item.status.charAt(0).toUpperCase() + entry.item.status.slice(1)}</div>
                       ${entry.item.pinned ? '<div class="badge is-pinned">📍 Pinned</div>' : ''}
-                      ${entry.daysUntilDue < 0 && entry.item.status !== 'done' ? '<div class="badge is-urgency">🔥 Urgent</div>' : ''}
+                      ${entry.daysUntilDue < 0 && entry.item.status !== 'done' ? '<div class="badge is-overdue">⌛ Overdue</div><div class="badge is-urgency">🔥 Urgent</div>' : ''}
                       ${entry.item.recurrence && entry.item.recurrence !== 'none' ? `<div class="badge">🔄 ${entry.item.recurrence}</div>` : ''}
                     </div>
                     <h3 style="margin-top: 0.4rem">${highlightMatch(entry.item.title, uiState.searchQuery)}</h3>
