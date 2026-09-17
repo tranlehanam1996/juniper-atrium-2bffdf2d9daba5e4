@@ -20,7 +20,10 @@ export const theme = {
     { title: "Monthly Nail Trim", category: "Grooming", effort: 20, impact: 4 },
     { title: "Daily Walk", category: "Exercise", effort: 30, impact: 5 },
     { title: "Heartworm Meds", category: "Health", effort: 5, impact: 5 },
-    { title: "Training Session", category: "Training", effort: 15, impact: 3 }
+    { title: "Training Session", category: "Training", effort: 15, impact: 3 },
+    { title: "Vet Check-up", category: "Health", effort: 120, impact: 5 },
+    { title: "Toy Sanitization", category: "Supplies", effort: 30, impact: 2 },
+    { title: "Ear Cleaning", category: "Grooming", effort: 10, impact: 3 }
   ],
   "seeds": [
     [

@@ -241,7 +241,7 @@ function render() {
           </div>
 
           <div id="record-list">
-            ${filteredPlan.length === 0 ? '<div class="empty">✨ No items matching filters. <br><small>Time to relax or add a new care item!</small></div>' : ''}
+            ${filteredPlan.length === 0 ? `<div class="empty">${uiState.focusMode ? '✨ No urgent items require your focus right now.' : '✨ No items matching filters. <br><small>Time to relax or add a new care item!</small>'}</div>` : ''}
             ${filteredPlan.map(entry => `
               <div class="record ${entry.item.status === 'done' ? 'is-done' : ''} ${entry.daysUntilDue < 0 && entry.item.status !== 'done' ? 'is-overdue' : ''} ${entry.item.pinned ? 'is-pinned' : ''}">
                 <div style="display: flex; align-items: center; gap: 1rem; flex: 1">
