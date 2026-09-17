@@ -244,16 +244,21 @@ function render() {
             ${filteredPlan.length === 0 ? '<div class="empty">✨ No items matching filters. <br><small>Time to relax or add a new care item!</small></div>' : ''}
             ${filteredPlan.map(entry => `
               <div class="record ${entry.item.status === 'done' ? 'is-done' : ''} ${entry.daysUntilDue < 0 && entry.item.status !== 'done' ? 'is-overdue' : ''} ${entry.item.pinned ? 'is-pinned' : ''}">
-                <div style="flex: 1">
-                  <div class="badge-group">
-                    <div class="badge">${highlightMatch(entry.item.category, uiState.searchQuery)}</div>
-                    <div class="badge status-${entry.item.status}">${entry.item.status.charAt(0).toUpperCase() + entry.item.status.slice(1)}</div>
-                    ${entry.item.pinned ? '<div class="badge is-pinned">📍 Pinned</div>' : ''}
-                    ${entry.daysUntilDue < 0 && entry.item.status !== 'done' ? '<div class="badge is-urgency">🔥 Urgent</div>' : ''}
-                    ${entry.item.recurrence && entry.item.recurrence !== 'none' ? `<div class="badge">🔄 ${entry.item.recurrence}</div>` : ''}
+                <div style="display: flex; align-items: center; gap: 1rem; flex: 1">
+                  <div class="status-checkbox">
+                    <input type="checkbox" ${entry.item.status === 'done' ? 'checked' : ''} onclick="toggleStatus('${entry.item.id}')" title="Mark as done/planned">
                   </div>
-                  <h3 style="margin-top: 0.4rem">${highlightMatch(entry.item.title, uiState.searchQuery)}</h3>
-                  <p>${entry.reasons.join(", ")} • Due ${entry.item.dueDate}</p>
+                  <div style="flex: 1">
+                    <div class="badge-group">
+                      <div class="badge">${highlightMatch(entry.item.category, uiState.searchQuery)}</div>
+                      <div class="badge status-${entry.item.status}">${entry.item.status.charAt(0).toUpperCase() + entry.item.status.slice(1)}</div>
+                      ${entry.item.pinned ? '<div class="badge is-pinned">📍 Pinned</div>' : ''}
+                      ${entry.daysUntilDue < 0 && entry.item.status !== 'done' ? '<div class="badge is-urgency">🔥 Urgent</div>' : ''}
+                      ${entry.item.recurrence && entry.item.recurrence !== 'none' ? `<div class="badge">🔄 ${entry.item.recurrence}</div>` : ''}
+                    </div>
+                    <h3 style="margin-top: 0.4rem">${highlightMatch(entry.item.title, uiState.searchQuery)}</h3>
+                    <p>${entry.reasons.join(", ")} • Due ${entry.item.dueDate}</p>
+                  </div>
                 </div>
                 <div class="record-actions">
                   <div class="actions-inner">

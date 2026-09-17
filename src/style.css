@@ -55,3 +55,6 @@ label { display: grid; gap: .35rem; color: #526b64; font-size: .82rem; font-weig
 .hero.is-focus { background: linear-gradient(135deg,#173c34,#112a25); }
 .layout.is-focus { grid-template-columns: 1fr; }
 .hide-focus { display: none !important; }
+
+.status-checkbox { display: flex; align-items: center; justify-content: center; width: 24px; }
+.status-checkbox input { width: 18px; height: 18px; cursor: pointer; accent-color: #176b55; }
