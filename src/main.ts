@@ -31,6 +31,17 @@ const uiState = {
   focusMode: false,
 };
 
+// Local storage for quick-add history
+const getHistory = (): {title: string, category: string}[] => 
+  JSON.parse(localStorage.getItem("pca_history") ?? "[]").slice(0, 5);
+
+const saveToHistory = (title: string, category: string) => {
+  const history = getHistory();
+  const filtered = history.filter(h => h.title !== title || h.category !== category);
+  filtered.unshift({ title, category });
+  localStorage.setItem("pca_history", JSON.stringify(filtered.slice(0, 5)));
+};
+
 function highlightMatch(text: string, query: string): string {
   if (!query) return text;
   const regex = new RegExp(`(${query})`, "gi");
@@ -68,6 +79,7 @@ function render() {
   const plan = buildPlan(records, today);
   const stats = summarize(records, today);
   const schedule = suggestDailyLoad(records, uiState.dailyCapacity, today);
+  const history = getHistory();
 
   // Apply filters
   let filteredPlan = plan.filter(entry => {
@@ -193,6 +205,13 @@ function render() {
           ${theme.templates.map((t, i) => `<button class="ghost q-template" data-index="${i}">${t.title}</button>`).join("")}
         </div>
 
+        ${history.length > 0 ? `
+          <div class="panel-title" style="margin-top: 1rem"><h2 style="font-size: 0.9rem">Recent</h2></div>
+          <div class="exchange" style="flex-wrap: wrap">
+            ${history.map(h => `<button class="ghost q-history" data-title="${h.title}" data-category="${h.category}">${h.title}</button>`).join("")}
+          </div>
+        ` : ''}
+
         <div class="panel-title" style="margin-top: 2rem"><h2>Data</h2></div>
         <div class="exchange">
           <button class="ghost" id="btn-export-json">JSON</button>
@@ -241,7 +260,7 @@ function render() {
           </div>
 
           <div id="record-list">
-            ${filteredPlan.length === 0 ? `<div class="empty">${uiState.focusMode ? '✨ No urgent items require your focus right now.' : '✨ No items matching filters. <br><small>Time to relax or add a new care item!</small>'}</div>` : ''}
+            ${filteredPlan.length === 0 ? `<div class="empty">${uiState.focusMode ? '✨ No urgent items require your focus right now. <br><small>Take a deep breath and enjoy the calm.</small>' : '✨ No items matching filters. <br><small>Time to relax or add a new care item!</small>'}</div>` : ''}
             ${filteredPlan.map(entry => `
               <div class="record ${entry.item.status === 'done' ? 'is-done' : ''} ${entry.daysUntilDue < 0 && entry.item.status !== 'done' ? 'is-overdue' : ''} ${entry.item.pinned ? 'is-pinned' : ''}">
                 <div style="display: flex; align-items: center; gap: 1rem; flex: 1">
@@ -402,6 +421,7 @@ function setupEventListeners(records: readonly LifeRecord[]) {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
+      saveToHistory(record.title!, record.category!);
       form.reset();
     };
   }
@@ -426,6 +446,7 @@ function setupEventListeners(records: readonly LifeRecord[]) {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
+      saveToHistory(title.trim(), category);
     });
   });
 
@@ -445,6 +466,29 @@ function setupEventListeners(records: readonly LifeRecord[]) {
         status: "planned",
         notes: "Added from template",
         recurrence: template.recurrence || "none",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+      saveToHistory(template.title, template.category);
+    });
+  });
+
+  document.querySelectorAll(".q-history").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const title = (btn as HTMLElement).dataset.title;
+      const category = (btn as HTMLElement).dataset.category;
+      if (!title || !category) return;
+      
+      store.upsert({
+        id: crypto.randomUUID(),
+        title: title,
+        category: category,
+        dueDate: localDay(),
+        effort: 30,
+        impact: 3,
+        status: "planned",
+        notes: "Re-added from history",
+        recurrence: "none",
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
