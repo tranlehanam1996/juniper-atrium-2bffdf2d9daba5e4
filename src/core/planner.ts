@@ -59,7 +59,8 @@ export function priorityFor(item: LifeRecord, today = localDay()): PlanEntry {
     reasons.push("already in progress");
   }
   if (item.recurrence && item.recurrence !== "none") {
-    score += 5;
+    // Habit boost is lower than urgency but ensures it stays visible
+    score += 4;
     reasons.push("recurring habit");
   }
   if (item.status === "done") score = -1;
@@ -97,12 +98,34 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
     used: 0,
     entries: [] as PlanEntry[],
   }));
-  for (const entry of buildPlan(items, today)) {
-    const candidates = days.filter((day, index) => index <= Math.max(0, Math.min(6, entry.daysUntilDue)));
-    const target = (candidates.length > 0 ? candidates : days).sort((a, b) => a.used - b.used)[0];
-    if (!target) continue;
-    target.entries.push(entry);
-    target.used += entry.item.effort;
+
+  const planned = buildPlan(items, today);
+  
+  for (const entry of planned) {
+    // Try to fit in the day it's actually due first, if it's within the next 7 days
+    const dueDayIndex = entry.daysUntilDue;
+    if (dueDayIndex >= 0 && dueDayIndex < 7) {
+      const dueDay = days[dueDayIndex];
+      if (dueDay.used + entry.item.effort <= capacity) {
+        dueDay.entries.push(entry);
+        dueDay.used += entry.item.effort;
+        continue;
+      }
+    }
+
+    // Otherwise, find the day with the most remaining capacity among available candidates
+    // Candidates are today up to the due date (if in range) or any day if overdue
+    const candidates = days.filter((_, index) => {
+      if (entry.daysUntilDue < 0) return true; // Overdue can go anywhere
+      return index <= Math.min(6, entry.daysUntilDue);
+    });
+
+    const target = candidates.sort((a, b) => a.used - b.used)[0];
+    if (target) {
+      target.entries.push(entry);
+      target.used += entry.item.effort;
+    }
   }
+
   return days.map((day) => ({ ...day, overloaded: day.used > capacity }));
 }
