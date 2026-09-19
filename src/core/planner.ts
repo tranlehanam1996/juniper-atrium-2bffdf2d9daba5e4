@@ -78,6 +78,15 @@ export function buildPlan(items: readonly LifeRecord[], today = localDay()): Pla
     });
 }
 
+export function focusedPlan(items: readonly LifeRecord[], today = localDay()): PlanEntry[] {
+  const plan = buildPlan(items, today);
+  return plan.filter(entry => 
+    entry.item.pinned || 
+    entry.daysUntilDue <= 0 || 
+    entry.score > 80
+  );
+}
+
 export function summarize(items: readonly LifeRecord[], today = localDay()): PlanSummary {
   return items.reduce<PlanSummary>((summary, item) => {
     summary.total += 1;
