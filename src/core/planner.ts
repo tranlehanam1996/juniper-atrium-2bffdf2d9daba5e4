@@ -57,7 +57,10 @@ export function buildPlan(items: readonly LifeRecord[], today = localDay()): Pla
   return items
     .map((item) => priorityFor(item, today))
     .filter((entry) => entry.item.status !== "done")
-    .sort((a, b) => b.score - a.score || a.item.dueDate.localeCompare(b.item.dueDate));
+    .sort((a, b) => {
+      if (a.item.pinned !== b.item.pinned) return a.item.pinned ? -1 : 1;
+      return b.score - a.score || a.item.dueDate.localeCompare(b.item.dueDate);
+    });
 }
 
 export function summarize(items: readonly LifeRecord[], today = localDay()): PlanSummary {
