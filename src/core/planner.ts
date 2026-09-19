@@ -48,6 +48,10 @@ export function priorityFor(item: LifeRecord, today = localDay()): PlanEntry {
     score += 8;
     reasons.push("already in progress");
   }
+  if (item.recurrence && item.recurrence !== "none") {
+    score += 5;
+    reasons.push("recurring habit");
+  }
   if (item.status === "done") score = -1;
   if (reasons.length === 0) reasons.push("ranked by impact and effort");
   return { item, score: Math.round(score * 10) / 10, reasons, daysUntilDue };
