@@ -46,8 +46,12 @@ export function priorityFor(item: LifeRecord, today = localDay()): PlanEntry {
   } else if (daysUntilDue === 0) {
     score += 45;
     reasons.push("due today");
+  } else if (daysUntilDue <= 3) {
+    // Soft deadline window: prioritize these slightly more to prevent overdue spikes
+    score += 30 - daysUntilDue * 6;
+    reasons.push(`due very soon`);
   } else if (daysUntilDue <= 7) {
-    score += 36 - daysUntilDue * 4;
+    score += 20 - daysUntilDue * 2;
     reasons.push(`due in ${daysUntilDue} day(s)`);
   }
 
@@ -59,7 +63,6 @@ export function priorityFor(item: LifeRecord, today = localDay()): PlanEntry {
     reasons.push("already in progress");
   }
   if (item.recurrence && item.recurrence !== "none") {
-    // Habit boost is lower than urgency but ensures it stays visible
     score += 4;
     reasons.push("recurring habit");
   }
@@ -82,8 +85,9 @@ export function focusedPlan(items: readonly LifeRecord[], today = localDay()): P
   const plan = buildPlan(items, today);
   return plan.filter(entry => 
     entry.item.pinned || 
-    entry.daysUntilDue <= 0 || 
-    entry.score > 80
+    entry.daysUntilDue <= 1 || 
+    (entry.item.impact >= 4 && entry.daysUntilDue <= 3) ||
+    entry.score > 85
   );
 }
 
@@ -111,7 +115,6 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
   const planned = buildPlan(items, today);
   
   for (const entry of planned) {
-    // Try to fit in the day it's actually due first, if it's within the next 7 days
     const dueDayIndex = entry.daysUntilDue;
     if (dueDayIndex >= 0 && dueDayIndex < 7) {
       const dueDay = days[dueDayIndex];
@@ -122,10 +125,8 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
       }
     }
 
-    // Otherwise, find the day with the most remaining capacity among available candidates
-    // Candidates are today up to the due date (if in range) or any day if overdue
     const candidates = days.filter((_, index) => {
-      if (entry.daysUntilDue < 0) return true; // Overdue can go anywhere
+      if (entry.daysUntilDue < 0) return true;
       return index <= Math.min(6, entry.daysUntilDue);
     });
 
