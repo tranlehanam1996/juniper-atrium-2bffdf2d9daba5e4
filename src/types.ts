@@ -42,6 +42,7 @@ export interface PlanEntry {
   score: number;
   reasons: string[];
   daysUntilDue: number;
+  isCritical?: boolean;
 }
 
 export interface PlanSummary {

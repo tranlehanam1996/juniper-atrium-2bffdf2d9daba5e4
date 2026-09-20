@@ -32,14 +32,16 @@ export function priorityFor(item: LifeRecord, today = localDay()): PlanEntry {
   const daysUntilDue = daysBetween(today, item.dueDate);
   const reasons: string[] = [];
   let score = item.impact * 12;
+  let isCritical = false;
 
   if (daysUntilDue < 0) {
     const overdueDays = Math.abs(daysUntilDue);
     score += 55 + Math.min(overdueDays, 14) * 3;
     
     if (overdueDays > 7) {
-      score += 15;
+      score += 25;
       reasons.push(`critical: ${overdueDays} day(s) overdue`);
+      isCritical = true;
     } else {
       reasons.push(`${overdueDays} day(s) overdue`);
     }
@@ -68,7 +70,7 @@ export function priorityFor(item: LifeRecord, today = localDay()): PlanEntry {
   }
   if (item.status === "done") score = -1;
   if (reasons.length === 0) reasons.push("ranked by impact and effort");
-  return { item, score: Math.round(score * 10) / 10, reasons, daysUntilDue };
+  return { item, score: Math.round(score * 10) / 10, reasons, daysUntilDue, isCritical };
 }
 
 export function buildPlan(items: readonly LifeRecord[], today = localDay()): PlanEntry[] {
@@ -85,6 +87,7 @@ export function focusedPlan(items: readonly LifeRecord[], today = localDay()): P
   const plan = buildPlan(items, today);
   return plan.filter(entry => 
     entry.item.pinned || 
+    entry.isCritical ||
     entry.daysUntilDue <= 1 || 
     (entry.item.impact >= 4 && entry.daysUntilDue <= 3) ||
     entry.score > 85
