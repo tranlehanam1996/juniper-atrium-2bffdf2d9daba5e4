@@ -47,6 +47,13 @@ export function priorityFor(item: LifeRecord, today = localDay()): PlanEntry {
     } else {
       reasons.push(`${overdueDays} day(s) overdue`);
     }
+
+    // Decay: Extremely old items eventually lose priority to allow new urgent work to surface
+    if (overdueDays > 30) {
+      const decay = Math.min(overdueDays - 30, 30) * 2;
+      score -= decay;
+      if (decay > 20) reasons.push("priority decayed (stale)");
+    }
   } else if (daysUntilDue === 0) {
     score += 45;
     reasons.push("due today");
@@ -65,7 +72,8 @@ export function priorityFor(item: LifeRecord, today = localDay()): PlanEntry {
   score -= effortPenalty;
 
   if (item.status === "active") {
-    score += 8;
+    // Reduced boost from 8 to 5 to avoid blocking high-impact new tasks
+    score += 5;
     reasons.push("already in progress");
   }
   if (item.recurrence && item.recurrence !== "none") {
