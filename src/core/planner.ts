@@ -118,6 +118,7 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
   const planned = buildPlan(items, today);
   
   for (const entry of planned) {
+    // 1. Try to place on its actual due date if it falls within the 7-day window
     const dueDayIndex = entry.daysUntilDue;
     if (dueDayIndex >= 0 && dueDayIndex < 7) {
       const dueDay = days[dueDayIndex];
@@ -128,15 +129,36 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
       }
     }
 
+    // 2. Find the earliest available slot that doesn't exceed capacity
+    // For overdue items, we want them as early as possible. 
+    // For future items, we want them as close to the due date as possible but before it.
     const candidates = days.filter((_, index) => {
-      if (entry.daysUntilDue < 0) return true;
-      return index <= Math.min(6, entry.daysUntilDue);
+      if (entry.daysUntilDue < 0) return true; // Overdue: any day is okay, but earlier is better
+      return index <= Math.min(6, entry.daysUntilDue); // Future: only days before or on due date
     });
 
-    const target = candidates.sort((a, b) => a.used - b.used)[0];
+    // Sort candidates: prefer days with more remaining capacity to balance the load,
+    // but for overdue/critical items, prioritize the absolute earliest day available.
+    const target = candidates.sort((a, b) => {
+      if (entry.isCritical || entry.daysUntilDue < 0) {
+        // Find the first day that can fit this item
+        return 0; // Use original order (chronological)
+      }
+      // For non-critical, balance the load
+      return a.used - b.used;
+    }).find(day => day.used + entry.item.effort <= capacity);
+
     if (target) {
       target.entries.push(entry);
       target.used += entry.item.effort;
+    } else {
+      // 3. Fallback: If it doesn't fit anywhere under capacity, put it on the least loaded day
+      // to at least keep it in the plan, even if it causes an overload.
+      const leastLoaded = days.sort((a, b) => a.used - b.used)[0];
+      if (leastLoaded) {
+        leastLoaded.entries.push(entry);
+        leastLoaded.used += entry.item.effort;
+      }
     }
   }
 
