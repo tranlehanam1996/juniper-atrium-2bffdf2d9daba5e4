@@ -58,7 +58,10 @@ export function priorityFor(item: LifeRecord, today = localDay()): PlanEntry {
     reasons.push(`due in ${daysUntilDue} day(s)`);
   }
 
-  const effortPenalty = Math.min(item.effort / 20, 12);
+  // Refined effort penalty: lower impact items are penalized more by effort
+  // High impact items (4-5) resist the effort penalty more effectively
+  const effortWeight = item.impact >= 4 ? 0.04 : 0.06;
+  const effortPenalty = Math.min(item.effort * effortWeight, 12);
   score -= effortPenalty;
 
   if (item.status === "active") {
@@ -69,6 +72,10 @@ export function priorityFor(item: LifeRecord, today = localDay()): PlanEntry {
     // Habits get a slightly higher priority to keep the routine consistent
     score += 6;
     reasons.push("recurring habit");
+  }
+  if (item.pinned) {
+    score += 15;
+    reasons.push("manually pinned");
   }
   if (item.status === "done") score = -1;
   if (reasons.length === 0) reasons.push("ranked by impact and effort");
