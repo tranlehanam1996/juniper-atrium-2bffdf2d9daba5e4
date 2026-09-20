@@ -36,10 +36,12 @@ export function priorityFor(item: LifeRecord, today = localDay()): PlanEntry {
 
   if (daysUntilDue < 0) {
     const overdueDays = Math.abs(daysUntilDue);
+    // Base overdue boost + linear growth
     score += 55 + Math.min(overdueDays, 14) * 3;
     
     if (overdueDays > 7) {
-      score += 25;
+      // Stagnation penalty: items left too long become critical to prevent permanent neglect
+      score += 25 + (overdueDays > 14 ? 15 : 0);
       reasons.push(`critical: ${overdueDays} day(s) overdue`);
       isCritical = true;
     } else {
@@ -49,7 +51,6 @@ export function priorityFor(item: LifeRecord, today = localDay()): PlanEntry {
     score += 45;
     reasons.push("due today");
   } else if (daysUntilDue <= 3) {
-    // Soft deadline window: prioritize these slightly more to prevent overdue spikes
     score += 30 - daysUntilDue * 6;
     reasons.push(`due very soon`);
   } else if (daysUntilDue <= 7) {
@@ -65,7 +66,8 @@ export function priorityFor(item: LifeRecord, today = localDay()): PlanEntry {
     reasons.push("already in progress");
   }
   if (item.recurrence && item.recurrence !== "none") {
-    score += 4;
+    // Habits get a slightly higher priority to keep the routine consistent
+    score += 6;
     reasons.push("recurring habit");
   }
   if (item.status === "done") score = -1;
@@ -118,7 +120,6 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
   const planned = buildPlan(items, today);
   
   for (const entry of planned) {
-    // 1. Try to place on its actual due date if it falls within the 7-day window
     const dueDayIndex = entry.daysUntilDue;
     if (dueDayIndex >= 0 && dueDayIndex < 7) {
       const dueDay = days[dueDayIndex];
@@ -129,22 +130,15 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
       }
     }
 
-    // 2. Find the earliest available slot that doesn't exceed capacity
-    // For overdue items, we want them as early as possible. 
-    // For future items, we want them as close to the due date as possible but before it.
     const candidates = days.filter((_, index) => {
-      if (entry.daysUntilDue < 0) return true; // Overdue: any day is okay, but earlier is better
-      return index <= Math.min(6, entry.daysUntilDue); // Future: only days before or on due date
+      if (entry.daysUntilDue < 0) return true;
+      return index <= Math.min(6, entry.daysUntilDue);
     });
 
-    // Sort candidates: prefer days with more remaining capacity to balance the load,
-    // but for overdue/critical items, prioritize the absolute earliest day available.
     const target = candidates.sort((a, b) => {
       if (entry.isCritical || entry.daysUntilDue < 0) {
-        // Find the first day that can fit this item
-        return 0; // Use original order (chronological)
+        return 0;
       }
-      // For non-critical, balance the load
       return a.used - b.used;
     }).find(day => day.used + entry.item.effort <= capacity);
 
@@ -152,8 +146,6 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
       target.entries.push(entry);
       target.used += entry.item.effort;
     } else {
-      // 3. Fallback: If it doesn't fit anywhere under capacity, put it on the least loaded day
-      // to at least keep it in the plan, even if it causes an overload.
       const leastLoaded = days.sort((a, b) => a.used - b.used)[0];
       if (leastLoaded) {
         leastLoaded.entries.push(entry);
