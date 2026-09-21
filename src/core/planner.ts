@@ -121,9 +121,9 @@ export function focusedPlan(items: readonly LifeRecord[], today = localDay()): P
   return plan.filter(entry => 
     entry.item.pinned || 
     entry.isCritical ||
-    entry.daysUntilDue <= 0 || 
+    (entry.daysUntilDue <= 0 && entry.score > 60) || 
     (entry.item.impact >= 4 && entry.daysUntilDue <= 2) ||
-    entry.score > 90
+    entry.score > 100
   );
 }
 
@@ -165,8 +165,8 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
       }
     }
 
-    // Strategy 2: Overdue or Critical items should be pushed to the EARLIEST possible day
-    if (entry.isCritical || dueDayIndex < 0) {
+    // Strategy 2: Critical items MUST be placed as early as possible, even if it exceeds soft capacity
+    if (entry.isCritical) {
       const earliest = days.find(day => day.used + entry.item.effort <= capacity);
       if (earliest) {
         earliest.entries.push(entry);
@@ -175,7 +175,17 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
       }
     }
 
-    // Strategy 3: General distribution with balance
+    // Strategy 3: Overdue items (non-critical) should be pushed to the earliest possible day
+    if (dueDayIndex < 0) {
+      const earliest = days.find(day => day.used + entry.item.effort <= capacity);
+      if (earliest) {
+        earliest.entries.push(entry);
+        earliest.used += entry.item.effort;
+        continue;
+      }
+    }
+
+    // Strategy 4: General distribution with balance
     const candidates = days.filter((_, index) => {
       if (entry.daysUntilDue < 0) return true;
       return index <= Math.min(6, entry.daysUntilDue);
