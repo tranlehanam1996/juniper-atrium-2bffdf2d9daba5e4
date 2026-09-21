@@ -136,6 +136,7 @@ export function summarize(items: readonly LifeRecord[], today = localDay()): Pla
 
 export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: number, today = localDay()) {
   const capacity = Math.max(1, minutesPerDay);
+  const softCapacity = capacity * 0.8;
   const days = Array.from({ length: 7 }, (_, offset) => ({
     date: new Date(Date.parse(`${today}T00:00:00Z`) + offset * DAY_MS).toISOString().slice(0, 10),
     used: 0,
@@ -147,10 +148,11 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
   for (const entry of planned) {
     const dueDayIndex = entry.daysUntilDue;
     
-    // Strategy 1: Due within the week and fits today/due day
+    // Strategy 1: Due within the week
     if (dueDayIndex >= 0 && dueDayIndex < 7) {
       const dueDay = days[dueDayIndex];
-      if (dueDay.used + entry.item.effort <= capacity) {
+      // Prefer placing on due day if it's under soft capacity
+      if (dueDay.used + entry.item.effort <= softCapacity) {
         dueDay.entries.push(entry);
         dueDay.used += entry.item.effort;
         continue;
@@ -167,12 +169,13 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
       }
     }
 
-    // Strategy 3: General distribution
+    // Strategy 3: General distribution with balance
     const candidates = days.filter((_, index) => {
       if (entry.daysUntilDue < 0) return true;
       return index <= Math.min(6, entry.daysUntilDue);
     });
 
+    // Sort candidates by usage to find the least loaded day first
     const target = candidates.sort((a, b) => a.used - b.used).find(day => day.used + entry.item.effort <= capacity);
 
     if (target) {
