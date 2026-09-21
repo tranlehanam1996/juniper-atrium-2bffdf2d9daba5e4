@@ -49,6 +49,12 @@ export function priorityFor(item: LifeRecord, today = localDay()): PlanEntry {
     // Base overdue boost + linear growth
     score += 55 + Math.min(overdueDays, 14) * 3;
     
+    // High-impact boost for overdue items to prevent they being drowned by small tasks
+    if (item.impact >= 4) {
+      score += 10;
+      reasons.push("high-impact overdue");
+    }
+
     if (overdueDays > 7) {
       // Stagnation penalty: items left too long become critical to prevent permanent neglect
       score += 25 + (overdueDays > 14 ? 15 : 0);
@@ -83,7 +89,8 @@ export function priorityFor(item: LifeRecord, today = localDay()): PlanEntry {
 
   // Refined effort penalty: lower impact items are penalized more by effort
   // High impact items (4-5) resist the effort penalty more effectively
-  const effortWeight = item.impact >= 4 ? 0.04 : 0.06;
+  // Medium impact items (3) get a slightly reduced penalty
+  const effortWeight = item.impact >= 4 ? 0.04 : (item.impact === 3 ? 0.05 : 0.06);
   const effortPenalty = Math.min(item.effort * effortWeight, 12);
   score -= effortPenalty;
 
