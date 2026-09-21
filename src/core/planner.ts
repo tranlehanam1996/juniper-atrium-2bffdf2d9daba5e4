@@ -70,6 +70,12 @@ export function priorityFor(item: LifeRecord, today = localDay()): PlanEntry {
   } else if (daysUntilDue <= 3) {
     score += 30 - daysUntilDue * 6;
     reasons.push(`due very soon`);
+    
+    // High-impact urgency boost: Accelerate high impact items as they near the deadline
+    if (item.impact >= 4 && daysUntilDue <= 2) {
+      score += 15;
+      reasons.push("high-impact urgency");
+    }
   } else if (daysUntilDue <= 7) {
     score += 20 - daysUntilDue * 2;
     reasons.push(`due in ${daysUntilDue} day(s)`);
@@ -115,9 +121,9 @@ export function focusedPlan(items: readonly LifeRecord[], today = localDay()): P
   return plan.filter(entry => 
     entry.item.pinned || 
     entry.isCritical ||
-    entry.daysUntilDue <= 1 || 
-    (entry.item.impact >= 4 && entry.daysUntilDue <= 3) ||
-    entry.score > 85
+    entry.daysUntilDue <= 0 || 
+    (entry.item.impact >= 4 && entry.daysUntilDue <= 2) ||
+    entry.score > 90
   );
 }
 
