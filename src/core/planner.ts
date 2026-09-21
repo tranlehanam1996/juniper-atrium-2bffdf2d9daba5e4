@@ -34,6 +34,16 @@ export function priorityFor(item: LifeRecord, today = localDay()): PlanEntry {
   let score = item.impact * 12;
   let isCritical = false;
 
+  // Category-based inherent urgency weighting
+  // Health is treated as highest priority, Grooming/Supplies as baseline
+  if (item.category === "Health") {
+    score += 10;
+    reasons.push("high-priority category");
+  } else if (item.category === "Training") {
+    score += 4;
+    reasons.push("development category");
+  }
+
   if (daysUntilDue < 0) {
     const overdueDays = Math.abs(daysUntilDue);
     // Base overdue boost + linear growth
@@ -136,6 +146,8 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
   
   for (const entry of planned) {
     const dueDayIndex = entry.daysUntilDue;
+    
+    // Strategy 1: Due within the week and fits today/due day
     if (dueDayIndex >= 0 && dueDayIndex < 7) {
       const dueDay = days[dueDayIndex];
       if (dueDay.used + entry.item.effort <= capacity) {
@@ -145,17 +157,23 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
       }
     }
 
+    // Strategy 2: Overdue or Critical items should be pushed to the EARLIEST possible day
+    if (entry.isCritical || dueDayIndex < 0) {
+      const earliest = days.find(day => day.used + entry.item.effort <= capacity);
+      if (earliest) {
+        earliest.entries.push(entry);
+        earliest.used += entry.item.effort;
+        continue;
+      }
+    }
+
+    // Strategy 3: General distribution
     const candidates = days.filter((_, index) => {
       if (entry.daysUntilDue < 0) return true;
       return index <= Math.min(6, entry.daysUntilDue);
     });
 
-    const target = candidates.sort((a, b) => {
-      if (entry.isCritical || entry.daysUntilDue < 0) {
-        return 0;
-      }
-      return a.used - b.used;
-    }).find(day => day.used + entry.item.effort <= capacity);
+    const target = candidates.sort((a, b) => a.used - b.used).find(day => day.used + entry.item.effort <= capacity);
 
     if (target) {
       target.entries.push(entry);
