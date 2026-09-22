@@ -161,10 +161,9 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
   for (const entry of planned) {
     const dueDayIndex = entry.daysUntilDue;
     
-    // Strategy 1: Due within the week
+    // Strategy 1: Due within the week - try the due day first within soft capacity
     if (dueDayIndex >= 0 && dueDayIndex < 7) {
       const dueDay = days[dueDayIndex];
-      // Prefer placing on due day if it's under soft capacity
       if (dueDay.used + entry.item.effort <= softCapacity) {
         dueDay.entries.push(entry);
         dueDay.used += entry.item.effort;
@@ -172,7 +171,7 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
       }
     }
 
-    // Strategy 2: Critical items MUST be placed as early as possible
+    // Strategy 2: Critical items - place in the earliest possible slot within hard capacity
     if (entry.isCritical) {
       const earliest = days.find(day => day.used + entry.item.effort <= capacity);
       if (earliest) {
@@ -182,7 +181,7 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
       }
     }
 
-    // Strategy 3: Overdue items (non-critical) should be pushed to the earliest possible day
+    // Strategy 3: Overdue items (non-critical) - place as early as possible within hard capacity
     if (dueDayIndex < 0) {
       const earliest = days.find(day => day.used + entry.item.effort <= capacity);
       if (earliest) {
@@ -192,13 +191,13 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
       }
     }
 
-    // Strategy 4: General distribution with balance
+    // Strategy 4: General distribution - balance across available candidates
     const candidates = days.filter((_, index) => {
       if (entry.daysUntilDue < 0) return true;
       return index <= Math.min(6, entry.daysUntilDue);
     });
 
-    // Sort candidates by usage to find the least loaded day first
+    // Try to find the least loaded candidate that still fits within hard capacity
     const target = candidates
       .sort((a, b) => a.used - b.used)
       .find(day => day.used + entry.item.effort <= capacity);
@@ -207,10 +206,10 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
       target.entries.push(entry);
       target.used += entry.item.effort;
     } else {
-      // Fallback: place in the least loaded day regardless of capacity
-      const leastLoaded = days.reduce((prev, curr) => (curr.used < prev.used ? curr : prev));
-      leastLoaded.entries.push(entry);
-      leastLoaded.used += entry.item.effort;
+      // Fallback: force into the absolute least loaded day of the week
+      const absoluteLeast = days.reduce((prev, curr) => (curr.used < prev.used ? curr : prev));
+      absoluteLeast.entries.push(entry);
+      absoluteLeast.used += entry.item.effort;
     }
   }
 
