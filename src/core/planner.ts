@@ -172,7 +172,7 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
       }
     }
 
-    // Strategy 2: Critical items MUST be placed as early as possible, even if it exceeds soft capacity
+    // Strategy 2: Critical items MUST be placed as early as possible
     if (entry.isCritical) {
       const earliest = days.find(day => day.used + entry.item.effort <= capacity);
       if (earliest) {
@@ -199,17 +199,18 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
     });
 
     // Sort candidates by usage to find the least loaded day first
-    const target = candidates.sort((a, b) => a.used - b.used).find(day => day.used + entry.item.effort <= capacity);
+    const target = candidates
+      .sort((a, b) => a.used - b.used)
+      .find(day => day.used + entry.item.effort <= capacity);
 
     if (target) {
       target.entries.push(entry);
       target.used += entry.item.effort;
     } else {
-      const leastLoaded = days.sort((a, b) => a.used - b.used)[0];
-      if (leastLoaded) {
-        leastLoaded.entries.push(entry);
-        leastLoaded.used += entry.item.effort;
-      }
+      // Fallback: place in the least loaded day regardless of capacity
+      const leastLoaded = days.reduce((prev, curr) => (curr.used < prev.used ? curr : prev));
+      leastLoaded.entries.push(entry);
+      leastLoaded.used += entry.item.effort;
     }
   }
 
