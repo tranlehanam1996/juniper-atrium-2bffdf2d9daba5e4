@@ -35,10 +35,12 @@ export function priorityFor(item: LifeRecord, today = localDay()): PlanEntry {
   let isCritical = false;
 
   // Category-based inherent urgency weighting
-  // Health is treated as highest priority, Grooming/Supplies as baseline
   if (item.category === "Health") {
-    score += 10;
-    reasons.push("high-priority category");
+    score += 15;
+    reasons.push("critical care category");
+  } else if (item.category === "Grooming") {
+    score += 6;
+    reasons.push("maintenance category");
   } else if (item.category === "Training") {
     score += 4;
     reasons.push("development category");
@@ -46,17 +48,14 @@ export function priorityFor(item: LifeRecord, today = localDay()): PlanEntry {
 
   if (daysUntilDue < 0) {
     const overdueDays = Math.abs(daysUntilDue);
-    // Base overdue boost + linear growth
     score += 55 + Math.min(overdueDays, 14) * 3;
     
-    // High-impact boost for overdue items to prevent they being drowned by small tasks
     if (item.impact >= 4) {
       score += 10;
       reasons.push("high-impact overdue");
     }
 
     if (overdueDays > 7) {
-      // Stagnation penalty: items left too long become critical to prevent permanent neglect
       score += 25 + (overdueDays > 14 ? 15 : 0);
       reasons.push(`critical: ${overdueDays} day(s) overdue`);
       isCritical = true;
@@ -64,7 +63,6 @@ export function priorityFor(item: LifeRecord, today = localDay()): PlanEntry {
       reasons.push(`${overdueDays} day(s) overdue`);
     }
 
-    // Decay: Extremely old items eventually lose priority to allow new urgent work to surface
     if (overdueDays > 30) {
       const decay = Math.min(overdueDays - 30, 30) * 2;
       score -= decay;
@@ -77,7 +75,6 @@ export function priorityFor(item: LifeRecord, today = localDay()): PlanEntry {
     score += 30 - daysUntilDue * 6;
     reasons.push(`due very soon`);
     
-    // High-impact urgency boost: Accelerate high impact items as they near the deadline
     if (item.impact >= 4 && daysUntilDue <= 2) {
       score += 15;
       reasons.push("high-impact urgency");
@@ -87,20 +84,15 @@ export function priorityFor(item: LifeRecord, today = localDay()): PlanEntry {
     reasons.push(`due in ${daysUntilDue} day(s)`);
   }
 
-  // Refined effort penalty: lower impact items are penalized more by effort
-  // High impact items (4-5) resist the effort penalty more effectively
-  // Medium impact items (3) get a slightly reduced penalty
   const effortWeight = item.impact >= 4 ? 0.04 : (item.impact === 3 ? 0.05 : 0.06);
   const effortPenalty = Math.min(item.effort * effortWeight, 12);
   score -= effortPenalty;
 
   if (item.status === "active") {
-    // Reduced boost from 8 to 5 to avoid blocking high-impact new tasks
     score += 5;
     reasons.push("already in progress");
   }
   if (item.recurrence && item.recurrence !== "none") {
-    // Habits get a slightly higher priority to keep the routine consistent
     score += 6;
     reasons.push("recurring habit");
   }
@@ -128,9 +120,9 @@ export function focusedPlan(items: readonly LifeRecord[], today = localDay()): P
   return plan.filter(entry => 
     entry.item.pinned || 
     entry.isCritical ||
-    (entry.daysUntilDue <= 0 && entry.score > 60) || 
-    (entry.item.impact >= 4 && entry.daysUntilDue <= 2) ||
-    entry.score > 100
+    (entry.daysUntilDue <= 0 && entry.score > 70) || 
+    (entry.item.impact >= 5 && entry.daysUntilDue <= 3) ||
+    entry.score > 110
   );
 }
 
@@ -161,7 +153,6 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
   for (const entry of planned) {
     const dueDayIndex = entry.daysUntilDue;
     
-    // Strategy 1: Due within the week - try the due day first within soft capacity
     if (dueDayIndex >= 0 && dueDayIndex < 7) {
       const dueDay = days[dueDayIndex];
       if (dueDay.used + entry.item.effort <= softCapacity) {
@@ -171,7 +162,6 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
       }
     }
 
-    // Strategy 2: Critical items - place in the earliest possible slot within hard capacity
     if (entry.isCritical) {
       const earliest = days.find(day => day.used + entry.item.effort <= capacity);
       if (earliest) {
@@ -181,7 +171,6 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
       }
     }
 
-    // Strategy 3: Overdue items (non-critical) - place as early as possible within hard capacity
     if (dueDayIndex < 0) {
       const earliest = days.find(day => day.used + entry.item.effort <= capacity);
       if (earliest) {
@@ -191,13 +180,11 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
       }
     }
 
-    // Strategy 4: General distribution - balance across available candidates
     const candidates = days.filter((_, index) => {
       if (entry.daysUntilDue < 0) return true;
       return index <= Math.min(6, entry.daysUntilDue);
     });
 
-    // Try to find the least loaded candidate that still fits within hard capacity
     const target = candidates
       .sort((a, b) => a.used - b.used)
       .find(day => day.used + entry.item.effort <= capacity);
@@ -206,7 +193,6 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
       target.entries.push(entry);
       target.used += entry.item.effort;
     } else {
-      // Fallback: force into the absolute least loaded day of the week
       const absoluteLeast = days.reduce((prev, curr) => (curr.used < prev.used ? curr : prev));
       absoluteLeast.entries.push(entry);
       absoluteLeast.used += entry.item.effort;
