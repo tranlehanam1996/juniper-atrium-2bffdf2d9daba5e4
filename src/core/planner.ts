@@ -88,6 +88,12 @@ export function priorityFor(item: LifeRecord, today = localDay()): PlanEntry {
   const effortPenalty = Math.min(item.effort * effortWeight, 12);
   score -= effortPenalty;
 
+  // Quick Win Bonus: High impact, low effort (e.g., impact >= 4 and effort <= 15)
+  if (item.impact >= 4 && item.effort <= 15) {
+    score += 12;
+    reasons.push("quick win");
+  }
+
   if (item.status === "active") {
     score += 5;
     reasons.push("already in progress");
@@ -122,6 +128,7 @@ export function focusedPlan(items: readonly LifeRecord[], today = localDay()): P
     entry.isCritical ||
     (entry.daysUntilDue <= 0 && entry.score > 70) || 
     (entry.item.impact >= 5 && entry.daysUntilDue <= 3) ||
+    (entry.item.impact >= 4 && entry.item.effort <= 15 && entry.daysUntilDue <= 7) ||
     entry.score > 110
   );
 }
