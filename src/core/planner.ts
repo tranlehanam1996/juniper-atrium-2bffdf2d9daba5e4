@@ -160,6 +160,7 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
   for (const entry of planned) {
     const dueDayIndex = entry.daysUntilDue;
     
+    // Strategy 1: Try to fit it on its due date if it's within the week and under soft capacity
     if (dueDayIndex >= 0 && dueDayIndex < 7) {
       const dueDay = days[dueDayIndex];
       if (dueDay.used + entry.item.effort <= softCapacity) {
@@ -169,7 +170,8 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
       }
     }
 
-    if (entry.isCritical) {
+    // Strategy 2: Critical or Overdue items get first available slot under full capacity
+    if (entry.isCritical || dueDayIndex < 0) {
       const earliest = days.find(day => day.used + entry.item.effort <= capacity);
       if (earliest) {
         earliest.entries.push(entry);
@@ -178,18 +180,10 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
       }
     }
 
-    if (dueDayIndex < 0) {
-      const earliest = days.find(day => day.used + entry.item.effort <= capacity);
-      if (earliest) {
-        earliest.entries.push(entry);
-        earliest.used += entry.item.effort;
-        continue;
-      }
-    }
-
+    // Strategy 3: For non-critical future items, try any day up to the due date that has space
     const candidates = days.filter((_, index) => {
-      if (entry.daysUntilDue < 0) return true;
-      return index <= Math.min(6, entry.daysUntilDue);
+      if (dueDayIndex < 0) return true;
+      return index <= Math.min(6, dueDayIndex);
     });
 
     const target = candidates
@@ -200,6 +194,7 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
       target.entries.push(entry);
       target.used += entry.item.effort;
     } else {
+      // Strategy 4: Spillover - put in the least loaded day regardless of capacity
       const absoluteLeast = days.reduce((prev, curr) => (curr.used < prev.used ? curr : prev));
       absoluteLeast.entries.push(entry);
       absoluteLeast.used += entry.item.effort;
