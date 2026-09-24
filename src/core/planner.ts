@@ -64,9 +64,9 @@ export function priorityFor(item: LifeRecord, today = localDay()): PlanEntry {
     }
 
     if (overdueDays > 30) {
-      const decay = Math.min(overdueDays - 30, 30) * 2;
+      const decay = Math.min(overdueDays - 30, 60) * 1.5;
       score -= decay;
-      if (decay > 20) reasons.push("priority decayed (stale)");
+      if (decay > 10) reasons.push("priority decayed (stale)");
     }
   } else if (daysUntilDue === 0) {
     score += 45;
@@ -126,10 +126,10 @@ export function focusedPlan(items: readonly LifeRecord[], today = localDay()): P
   return plan.filter(entry => 
     entry.item.pinned || 
     entry.isCritical ||
-    (entry.daysUntilDue <= 0 && entry.score > 70) || 
+    (entry.daysUntilDue <= 0 && entry.score > 80) || 
     (entry.item.impact >= 5 && entry.daysUntilDue <= 3) ||
     (entry.item.impact >= 4 && entry.item.effort <= 15 && entry.daysUntilDue <= 7) ||
-    entry.score > 110
+    entry.score > 120
   );
 }
 
