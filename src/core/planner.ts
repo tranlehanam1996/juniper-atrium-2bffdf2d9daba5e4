@@ -175,8 +175,8 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
       }
     }
 
-    // Strategy 2: Critical or Overdue items get first available slot under full capacity
-    if (entry.isCritical || dueDayIndex < 0) {
+    // Strategy 2: Critical, Overdue, or High-Impact items get priority across any available slot under full capacity
+    if (entry.isCritical || dueDayIndex < 0 || entry.item.impact >= 5) {
       const earliest = days.find(day => day.used + entry.item.effort <= capacity);
       if (earliest) {
         earliest.entries.push(entry);
@@ -199,7 +199,8 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
       target.entries.push(entry);
       target.used += entry.item.effort;
     } else {
-      // Strategy 4: Spillover - put in the least loaded day regardless of capacity
+      // Strategy 4: Spillover - prioritize the least loaded day
+      // If multiple days have the same minimum load, pick the earliest one to avoid back-loading the week
       const absoluteLeast = days.reduce((prev, curr) => (curr.used < prev.used ? curr : prev));
       absoluteLeast.entries.push(entry);
       absoluteLeast.used += entry.item.effort;
