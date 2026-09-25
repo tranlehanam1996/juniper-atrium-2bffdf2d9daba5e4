@@ -84,8 +84,15 @@ export function priorityFor(item: LifeRecord, today = localDay()): PlanEntry {
     reasons.push(`due in ${daysUntilDue} day(s)`);
   }
 
+  // Near-term urgency multiplier for items due in 0-2 days
+  if (daysUntilDue >= 0 && daysUntilDue <= 2) {
+    const multiplier = 1 + (3 - daysUntilDue) * 0.05;
+    score *= multiplier;
+    if (multiplier > 1) reasons.push("near-term urgency");
+  }
+
   // Effort penalty adjusted by category and impact
-  let effortWeight = item.impact >= 4 ? 0.04 : (item.impact === 3 ? 0.05 : 0.07);
+  let effortWeight = item.impact >= 4 ? 0.03 : (item.impact === 3 ? 0.05 : 0.07);
   if (item.category === "Health") effortWeight *= 0.7;
   if (item.category === "Supplies") effortWeight *= 1.2;
 
