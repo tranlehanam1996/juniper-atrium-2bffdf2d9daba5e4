@@ -84,6 +84,14 @@ export function priorityFor(item: LifeRecord, today = localDay()): PlanEntry {
     reasons.push(`due in ${daysUntilDue} day(s)`);
   }
 
+  // Weekend Bonus: Suggest tasks that fall on Saturday/Sunday (0=Sun, 6=Sat)
+  const dueDateObj = new Date(`${item.dueDate}T00:00:00Z`);
+  const dayOfWeek = dueDateObj.getUTCDay();
+  if (dayOfWeek === 0 || dayOfWeek === 6) {
+    score += 5;
+    reasons.push("weekend window");
+  }
+
   // Near-term urgency multiplier for items due in 0-2 days
   if (daysUntilDue >= 0 && daysUntilDue <= 2) {
     const multiplier = 1 + (3 - daysUntilDue) * 0.05;
@@ -99,9 +107,9 @@ export function priorityFor(item: LifeRecord, today = localDay()): PlanEntry {
   const effortPenalty = Math.min(item.effort * effortWeight, 15);
   score -= effortPenalty;
 
-  // Quick Win Bonus: High impact, low effort (e.g., impact >= 4 and effort <= 15)
+  // Quick Win Bonus: Higher impact items with low effort get a stronger boost
   if (item.impact >= 4 && item.effort <= 15) {
-    score += 12;
+    score += (item.impact === 5 ? 18 : 12);
     reasons.push("quick win");
   }
 
