@@ -84,7 +84,11 @@ export function priorityFor(item: LifeRecord, today = localDay()): PlanEntry {
     reasons.push(`due in ${daysUntilDue} day(s)`);
   }
 
-  const effortWeight = item.impact >= 4 ? 0.04 : (item.impact === 3 ? 0.05 : 0.06);
+  // Effort penalty adjusted by category: Health is less penalized for effort
+  let effortWeight = item.impact >= 4 ? 0.04 : (item.impact === 3 ? 0.05 : 0.06);
+  if (item.category === "Health") effortWeight *= 0.7;
+  if (item.category === "Supplies") effortWeight *= 1.2;
+
   const effortPenalty = Math.min(item.effort * effortWeight, 12);
   score -= effortPenalty;
 
@@ -128,7 +132,8 @@ export function focusedPlan(items: readonly LifeRecord[], today = localDay()): P
     entry.isCritical ||
     (entry.daysUntilDue <= 0 && entry.score > 80) || 
     (entry.item.impact >= 5 && entry.daysUntilDue <= 3) ||
-    (entry.item.impact >= 4 && entry.item.effort <= 15 && entry.daysUntilDue <= 7) ||
+    (entry.item.impact >= 4 && entry.item.effort <= 30 && entry.daysUntilDue <= 7) ||
+    (entry.item.impact >= 5 && entry.item.effort <= 60 && entry.daysUntilDue <= 3) ||
     entry.score > 120
   );
 }
