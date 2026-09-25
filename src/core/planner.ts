@@ -105,6 +105,10 @@ export function priorityFor(item: LifeRecord, today = localDay()): PlanEntry {
   if (item.recurrence && item.recurrence !== "none") {
     score += 6;
     reasons.push("recurring habit");
+    if (item.recurrence === "daily") {
+      score += 4;
+      reasons.push("daily routine");
+    }
   }
   if (item.pinned) {
     score += 15;
