@@ -76,7 +76,7 @@ export function priorityFor(item: LifeRecord, today = localDay()): PlanEntry {
     reasons.push(`due very soon`);
     
     if (item.impact >= 4 && daysUntilDue <= 2) {
-      score += 15;
+      score += 20;
       reasons.push("high-impact urgency");
     }
   } else if (daysUntilDue <= 7) {
@@ -84,12 +84,12 @@ export function priorityFor(item: LifeRecord, today = localDay()): PlanEntry {
     reasons.push(`due in ${daysUntilDue} day(s)`);
   }
 
-  // Effort penalty adjusted by category: Health is less penalized for effort
-  let effortWeight = item.impact >= 4 ? 0.04 : (item.impact === 3 ? 0.05 : 0.06);
+  // Effort penalty adjusted by category and impact
+  let effortWeight = item.impact >= 4 ? 0.04 : (item.impact === 3 ? 0.05 : 0.07);
   if (item.category === "Health") effortWeight *= 0.7;
   if (item.category === "Supplies") effortWeight *= 1.2;
 
-  const effortPenalty = Math.min(item.effort * effortWeight, 12);
+  const effortPenalty = Math.min(item.effort * effortWeight, 15);
   score -= effortPenalty;
 
   // Quick Win Bonus: High impact, low effort (e.g., impact >= 4 and effort <= 15)
