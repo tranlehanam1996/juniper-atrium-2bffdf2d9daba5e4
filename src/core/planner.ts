@@ -33,6 +33,8 @@ export function priorityFor(item: LifeRecord, today = localDay()): PlanEntry {
   const reasons: string[] = [];
   let score = item.impact * 12;
   let isCritical = false;
+  let isQuickWin = false;
+  let isMilestone = false;
 
   // Category-based inherent urgency weighting
   if (item.category === "Health") {
@@ -112,12 +114,14 @@ export function priorityFor(item: LifeRecord, today = localDay()): PlanEntry {
   if (item.impact >= 5 && item.effort > 120) {
     score += 8;
     reasons.push("major milestone");
+    isMilestone = true;
   }
 
   // Quick Win Bonus: Higher impact items with low effort get a stronger boost
   if (item.impact >= 4 && item.effort <= 15) {
     score += (item.impact === 5 ? 18 : 12);
     reasons.push("quick win");
+    isQuickWin = true;
   }
 
   if (item.status === "active") {
@@ -138,7 +142,7 @@ export function priorityFor(item: LifeRecord, today = localDay()): PlanEntry {
   }
   if (item.status === "done") score = -1;
   if (reasons.length === 0) reasons.push("ranked by impact and effort");
-  return { item, score: Math.round(score * 10) / 10, reasons, daysUntilDue, isCritical };
+  return { item, score: Math.round(score * 10) / 10, reasons, daysUntilDue, isCritical, isQuickWin, isMilestone };
 }
 
 export function buildPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {

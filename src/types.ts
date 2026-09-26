@@ -43,6 +43,8 @@ export interface PlanEntry {
   reasons: string[];
   daysUntilDue: number;
   isCritical?: boolean;
+  isQuickWin?: boolean;
+  isMilestone?: boolean;
 }
 
 export interface PlanSummary {
