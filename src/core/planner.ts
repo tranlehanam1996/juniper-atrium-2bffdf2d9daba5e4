@@ -64,9 +64,10 @@ export function priorityFor(item: LifeRecord, today = localDay()): PlanEntry {
     }
 
     if (overdueDays > 30) {
-      const decay = Math.min(overdueDays - 30, 60) * 1.5;
+      // Refined decay: more aggressive for very stale items to prevent "overdue noise"
+      const decay = Math.min(overdueDays - 30, 90) * 2.0;
       score -= decay;
-      if (decay > 10) reasons.push("priority decayed (stale)");
+      if (decay > 15) reasons.push("priority decayed (stale)");
     }
   } else if (daysUntilDue === 0) {
     score += 45;
@@ -106,6 +107,12 @@ export function priorityFor(item: LifeRecord, today = localDay()): PlanEntry {
 
   const effortPenalty = Math.min(item.effort * effortWeight, 15);
   score -= effortPenalty;
+
+  // High-effort High-impact balancing: ensure big important tasks aren't fully suppressed
+  if (item.impact >= 5 && item.effort > 120) {
+    score += 8;
+    reasons.push("major milestone");
+  }
 
   // Quick Win Bonus: Higher impact items with low effort get a stronger boost
   if (item.impact >= 4 && item.effort <= 15) {
