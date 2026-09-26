@@ -156,10 +156,10 @@ export function focusedPlan(items: readonly LifeRecord[], today = localDay()): P
   return plan.filter(entry => 
     entry.item.pinned || 
     entry.isCritical ||
-    (entry.daysUntilDue <= 0 && entry.score > 80) || 
-    (entry.item.impact >= 5 && entry.daysUntilDue <= 3) ||
-    (entry.item.impact >= 4 && entry.item.effort <= 30 && entry.daysUntilDue <= 7) ||
-    entry.score > 120
+    (entry.daysUntilDue <= 0 && entry.score > 70) || 
+    (entry.item.impact >= 4 && entry.daysUntilDue <= 3) ||
+    (entry.item.impact >= 3 && entry.item.effort <= 20 && entry.daysUntilDue <= 7) ||
+    entry.score > 110
   );
 }
 
@@ -188,7 +188,6 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
   const planned = buildPlan(items, today);
   
   // Sort planned entries: prioritize high effort items first for placement
-  // to avoid them being displaced by many small tasks
   const sortedForLoad = [...planned].sort((a, b) => b.item.effort - a.item.effort);
 
   for (const entry of sortedForLoad) {
@@ -228,7 +227,7 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
       target.entries.push(entry);
       target.used += entry.item.effort;
     } else {
-      // Strategy 4: Spillover - prioritize the least loaded day
+      // Strategy 4: Spillover - prioritize the least loaded day, even if it slightly overloads
       const absoluteLeast = days.reduce((prev, curr) => (curr.used < prev.used ? curr : prev));
       absoluteLeast.entries.push(entry);
       absoluteLeast.used += entry.item.effort;
