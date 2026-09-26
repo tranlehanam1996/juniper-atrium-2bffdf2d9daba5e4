@@ -152,7 +152,6 @@ export function focusedPlan(items: readonly LifeRecord[], today = localDay()): P
     (entry.daysUntilDue <= 0 && entry.score > 80) || 
     (entry.item.impact >= 5 && entry.daysUntilDue <= 3) ||
     (entry.item.impact >= 4 && entry.item.effort <= 30 && entry.daysUntilDue <= 7) ||
-    (entry.item.impact >= 5 && entry.item.effort <= 60 && entry.daysUntilDue <= 3) ||
     entry.score > 120
   );
 }
