@@ -156,10 +156,18 @@ export function focusedPlan(items: readonly LifeRecord[], today = localDay()): P
   return plan.filter(entry => 
     entry.item.pinned || 
     entry.isCritical ||
-    (entry.daysUntilDue <= 0 && entry.score > 70) || 
+    (entry.daysUntilDue <= 0 && entry.score > 85) || 
     (entry.item.impact >= 4 && entry.daysUntilDue <= 3) ||
     (entry.item.impact >= 3 && entry.item.effort <= 20 && entry.daysUntilDue <= 7) ||
-    entry.score > 110
+    entry.score > 120
+  );
+}
+
+export function lowEnergyPlan(items: readonly LifeRecord[], today = localDay()): PlanEntry[] {
+  const plan = buildPlan(items, today);
+  return plan.filter(entry => 
+    entry.item.effort <= 30 && 
+    (entry.score > 60 || entry.daysUntilDue <= 0)
   );
 }
 
