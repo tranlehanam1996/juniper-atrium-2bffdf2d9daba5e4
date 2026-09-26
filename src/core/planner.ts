@@ -141,8 +141,16 @@ export function priorityFor(item: LifeRecord, today = localDay()): PlanEntry {
   return { item, score: Math.round(score * 10) / 10, reasons, daysUntilDue, isCritical };
 }
 
-export function buildPlan(items: readonly LifeRecord[], today = localDay()): PlanEntry[] {
-  return items
+export function buildPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const filtered = query
+    ? items.filter(i => 
+        i.title.toLowerCase().includes(query.toLowerCase()) ||
+        i.notes.toLowerCase().includes(query.toLowerCase()) ||
+        i.category.toLowerCase().includes(query.toLowerCase())
+      )
+    : items;
+
+  return filtered
     .map((item) => priorityFor(item, today))
     .filter((entry) => entry.item.status !== "done")
     .sort((a, b) => {
@@ -151,8 +159,8 @@ export function buildPlan(items: readonly LifeRecord[], today = localDay()): Pla
     });
 }
 
-export function focusedPlan(items: readonly LifeRecord[], today = localDay()): PlanEntry[] {
-  const plan = buildPlan(items, today);
+export function focusedPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
   return plan.filter(entry => 
     entry.item.pinned || 
     entry.isCritical ||
@@ -163,8 +171,8 @@ export function focusedPlan(items: readonly LifeRecord[], today = localDay()): P
   );
 }
 
-export function lowEnergyPlan(items: readonly LifeRecord[], today = localDay()): PlanEntry[] {
-  const plan = buildPlan(items, today);
+export function lowEnergyPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
   return plan.filter(entry => 
     entry.item.effort <= 30 && 
     (entry.score > 60 || entry.daysUntilDue <= 0)
