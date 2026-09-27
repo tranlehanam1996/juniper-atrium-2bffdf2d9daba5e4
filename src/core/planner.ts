@@ -130,12 +130,22 @@ export function priorityFor(item: LifeRecord, today = localDay()): PlanEntry {
     reasons.push("already in progress");
   }
   if (item.recurrence && item.recurrence !== "none") {
-    score += 6;
+    // High-impact recurring (like meds) get more weight
+    const recurrenceBonus = item.impact >= 4 ? 8 : 4;
+    score += recurrenceBonus;
     reasons.push("recurring habit");
+
     if (item.recurrence === "daily") {
       score += 4;
       reasons.push("daily routine");
     }
+
+    // Low-effort/Low-impact maintenance: slightly boost if it's a 'light' task
+    if (item.impact < 3 && item.effort <= 20) {
+      score += 3;
+      reasons.push("light maintenance");
+    }
+
     // Maintenance grace: low impact recurring items don't spike priority as aggressively when slightly overdue
     if (daysUntilDue < 0 && daysUntilDue >= -3 && item.impact < 3) {
       score -= 10;
