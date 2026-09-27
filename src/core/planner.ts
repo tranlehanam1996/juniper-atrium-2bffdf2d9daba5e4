@@ -66,8 +66,9 @@ export function priorityFor(item: LifeRecord, today = localDay()): PlanEntry {
     }
 
     if (overdueDays > 30) {
-      // Refined decay: more aggressive for very stale items to prevent "overdue noise"
-      const decay = Math.min(overdueDays - 30, 90) * 2.0;
+      // Refined decay: Low impact items decay faster to reduce noise
+      const decayFactor = item.impact < 3 ? 3.0 : 2.0;
+      const decay = Math.min(overdueDays - 30, 90) * decayFactor;
       score -= decay;
       if (decay > 15) reasons.push("priority decayed (stale)");
     }
@@ -134,6 +135,11 @@ export function priorityFor(item: LifeRecord, today = localDay()): PlanEntry {
     if (item.recurrence === "daily") {
       score += 4;
       reasons.push("daily routine");
+    }
+    // Maintenance grace: low impact recurring items don't spike priority as aggressively when slightly overdue
+    if (daysUntilDue < 0 && daysUntilDue >= -3 && item.impact < 3) {
+      score -= 10;
+      reasons.push("maintenance grace");
     }
   }
   if (item.pinned) {
