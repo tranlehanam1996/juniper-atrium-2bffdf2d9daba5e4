@@ -28,7 +28,7 @@ export function validateRecord(input: Partial<LifeRecord>, theme: ThemeConfig): 
   return errors;
 }
 
-export function priorityFor(item: LifeRecord, today = localDay()): PlanEntry {
+export function priorityFor(item: LifeRecord, today = localDay(), contextItems: readonly LifeRecord[] = []): PlanEntry {
   const daysUntilDue = daysBetween(today, item.dueDate);
   const reasons: string[] = [];
   let score = item.impact * 12;
@@ -118,6 +118,20 @@ export function priorityFor(item: LifeRecord, today = localDay()): PlanEntry {
     isMilestone = true;
   }
 
+  // Batching Bonus: High-effort tasks are more attractive if other tasks of the same category are due soon
+  if (item.effort > 60) {
+    const batchCount = contextItems.filter(i => 
+      i.id !== item.id && 
+      i.category === item.category && 
+      Math.abs(daysBetween(today, i.dueDate)) <= 2
+    ).length;
+    if (batchCount > 0) {
+      const bonus = Math.min(batchCount * 3, 10);
+      score += bonus;
+      reasons.push("category batching");
+    }
+  }
+
   // Quick Win Bonus: Higher impact items with low effort get a stronger boost
   if (item.impact >= 4 && item.effort <= 15) {
     score += (item.impact === 5 ? 18 : 12);
@@ -171,7 +185,7 @@ export function buildPlan(items: readonly LifeRecord[], today = localDay(), quer
     : items;
 
   return filtered
-    .map((item) => priorityFor(item, today))
+    .map((item) => priorityFor(item, today, filtered))
     .filter((entry) => entry.item.status !== "done")
     .sort((a, b) => {
       if (a.item.pinned !== b.item.pinned) return a.item.pinned ? -1 : 1;
@@ -186,7 +200,8 @@ export function focusedPlan(items: readonly LifeRecord[], today = localDay(), qu
     entry.isCritical ||
     (entry.daysUntilDue <= 0 && entry.score > 85) || 
     (entry.item.impact >= 4 && entry.daysUntilDue <= 3) ||
-    (entry.item.impact >= 3 && entry.item.effort <= 20 && entry.daysUntilDue <= 7) ||
+    (entry.item.impact >= 3 && entry.item.effort <= 20 && entry.daysUntilDue <= 5) ||
+    (entry.item.impact >= 3 && entry.daysUntilDue <= 2) ||
     entry.score > 120
   );
 }
