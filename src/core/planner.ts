@@ -198,11 +198,11 @@ export function focusedPlan(items: readonly LifeRecord[], today = localDay(), qu
   return plan.filter(entry => 
     entry.item.pinned || 
     entry.isCritical ||
-    (entry.daysUntilDue <= 0 && entry.score > 85) || 
-    (entry.item.impact >= 4 && entry.daysUntilDue <= 3) ||
-    (entry.item.impact >= 3 && entry.item.effort <= 20 && entry.daysUntilDue <= 5) ||
-    (entry.item.impact >= 3 && entry.daysUntilDue <= 2) ||
-    entry.score > 120
+    (entry.daysUntilDue <= 0 && entry.score > 75) || 
+    (entry.item.impact >= 4 && entry.daysUntilDue <= 4) ||
+    (entry.item.impact >= 3 && entry.item.effort <= 20 && entry.daysUntilDue <= 7) ||
+    (entry.item.impact >= 3 && entry.daysUntilDue <= 3) ||
+    entry.score > 110
   );
 }
 
@@ -214,7 +214,7 @@ export function quickWinPlan(items: readonly LifeRecord[], today = localDay(), q
 export function lowEnergyPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
   const plan = buildPlan(items, today, query);
   return plan.filter(entry => 
-    (entry.item.effort <= 30 && (entry.score > 60 || entry.daysUntilDue <= 0)) ||
+    (entry.item.effort <= 30 && (entry.score > 50 || entry.daysUntilDue <= 1)) ||
     entry.isQuickWin
   );
 }
