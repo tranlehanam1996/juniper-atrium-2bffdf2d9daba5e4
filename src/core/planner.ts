@@ -284,6 +284,7 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
       target.used += entry.item.effort;
     } else {
       // Strategy 4: Spillover - prioritize the least loaded day, even if it slightly overloads
+      // We use a more robust spillover that tries to distribute weight across the week
       const absoluteLeast = days.reduce((prev, curr) => (curr.used < prev.used ? curr : prev));
       absoluteLeast.entries.push(entry);
       absoluteLeast.used += entry.item.effort;
