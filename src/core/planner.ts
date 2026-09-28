@@ -206,11 +206,16 @@ export function focusedPlan(items: readonly LifeRecord[], today = localDay(), qu
   );
 }
 
+export function quickWinPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => entry.isQuickWin);
+}
+
 export function lowEnergyPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
   const plan = buildPlan(items, today, query);
   return plan.filter(entry => 
-    entry.item.effort <= 30 && 
-    (entry.score > 60 || entry.daysUntilDue <= 0)
+    (entry.item.effort <= 30 && (entry.score > 60 || entry.daysUntilDue <= 0)) ||
+    entry.isQuickWin
   );
 }
 
