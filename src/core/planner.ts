@@ -201,7 +201,7 @@ export function buildPlan(items: readonly LifeRecord[], today = localDay(), quer
     });
 }
 
-export function focusedPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+export function focusedPlan(items: readonly LifeRecord[], today = localDay(), query = "", priorityThreshold = 110): PlanEntry[] {
   const plan = buildPlan(items, today, query);
   return plan.filter(entry => 
     entry.item.pinned || 
@@ -209,8 +209,8 @@ export function focusedPlan(items: readonly LifeRecord[], today = localDay(), qu
     (entry.daysUntilDue <= 0 && entry.score > 75) || 
     (entry.item.impact >= 4 && entry.daysUntilDue <= 4) ||
     (entry.item.impact >= 3 && entry.item.effort <= 20 && entry.daysUntilDue <= 7) ||
-    (entry.item.impact >= 3 && entry.daysUntilDue <= 3) ||
-    entry.score > 110
+    (entry.item.impact >= 3 && entry.daysUntilDue <= 2) ||
+    entry.score > priorityThreshold
   );
 }
 
