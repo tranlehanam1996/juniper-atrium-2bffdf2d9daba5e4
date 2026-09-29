@@ -70,6 +70,14 @@ export function priorityFor(item: LifeRecord, today = localDay(), contextItems: 
       const decayFactor = item.impact < 3 ? 3.0 : 2.0;
       const decay = Math.min(overdueDays - 30, 90) * decayFactor;
       score -= decay;
+      
+      // Recovery boost: Extremely overdue high-impact items get a second wind
+      // This prevents critical failures from disappearing completely due to decay
+      if (item.impact >= 4 && overdueDays > 60) {
+        score += 30;
+        reasons.push("critically neglected");
+      }
+
       if (decay > 15) reasons.push("priority decayed (stale)");
     }
   } else if (daysUntilDue === 0) {
