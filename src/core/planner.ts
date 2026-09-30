@@ -208,6 +208,7 @@ export function focusedPlan(items: readonly LifeRecord[], today = localDay(), qu
     entry.isCritical ||
     (entry.daysUntilDue <= 0 && entry.score > 75) || 
     (entry.item.impact >= 4 && entry.daysUntilDue <= 4) ||
+    (entry.isQuickWin && entry.daysUntilDue <= 7) ||
     (entry.item.impact >= 3 && entry.item.effort <= 20 && entry.daysUntilDue <= 7) ||
     (entry.item.impact >= 3 && entry.daysUntilDue <= 2) ||
     entry.score > priorityThreshold
