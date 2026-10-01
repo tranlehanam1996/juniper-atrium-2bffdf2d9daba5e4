@@ -145,6 +145,10 @@ export function priorityFor(item: LifeRecord, today = localDay(), contextItems: 
     score += (item.impact === 5 ? 18 : 12);
     reasons.push("quick win");
     isQuickWin = true;
+  } else if (item.effort <= 15) {
+    // Low-friction boost: encourage small maintenance tasks
+    score += 5;
+    reasons.push("low friction");
   }
 
   if (item.status === "active") {
