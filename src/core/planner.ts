@@ -103,6 +103,13 @@ export function priorityFor(item: LifeRecord, today = localDay(), contextItems: 
     reasons.push("weekend window");
   }
 
+  // Focus Window: Stronger boost for items due in the immediate 48-hour window
+  if (daysUntilDue >= 0 && daysUntilDue <= 2) {
+    const windowBoost = (3 - daysUntilDue) * 7;
+    score += windowBoost;
+    reasons.push("focus window");
+  }
+
   // Near-term urgency multiplier for items due in 0-2 days
   if (daysUntilDue >= 0 && daysUntilDue <= 2) {
     const multiplier = 1 + (3 - daysUntilDue) * 0.05;
