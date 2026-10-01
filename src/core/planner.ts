@@ -72,7 +72,6 @@ export function priorityFor(item: LifeRecord, today = localDay(), contextItems: 
       score -= decay;
       
       // Recovery boost: Extremely overdue high-impact items get a second wind
-      // This prevents critical failures from disappearing completely due to decay
       if (item.impact >= 4 && overdueDays > 60) {
         score += 30;
         reasons.push("critically neglected");
@@ -112,7 +111,8 @@ export function priorityFor(item: LifeRecord, today = localDay(), contextItems: 
   }
 
   // Effort penalty adjusted by category and impact
-  let effortWeight = item.impact >= 4 ? 0.03 : (item.impact === 3 ? 0.05 : 0.07);
+  // High-impact items are penalized less for their effort to ensure they stay visible
+  let effortWeight = item.impact >= 4 ? 0.02 : (item.impact === 3 ? 0.05 : 0.07);
   if (item.category === "Health") effortWeight *= 0.7;
   if (item.category === "Supplies") effortWeight *= 1.2;
 
@@ -170,7 +170,7 @@ export function priorityFor(item: LifeRecord, today = localDay(), contextItems: 
 
     // Maintenance grace: low impact recurring items don't spike priority as aggressively when slightly overdue
     if (daysUntilDue < 0 && daysUntilDue >= -3 && item.impact < 3) {
-      score -= 10;
+      score -= 15;
       reasons.push("maintenance grace");
     }
   }
@@ -293,7 +293,6 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
       target.used += entry.item.effort;
     } else {
       // Strategy 4: Spillover - prioritize the least loaded day, even if it slightly overloads
-      // We use a more robust spillover that tries to distribute weight across the week
       const absoluteLeast = days.reduce((prev, curr) => (curr.used < prev.used ? curr : prev));
       absoluteLeast.entries.push(entry);
       absoluteLeast.used += entry.item.effort;
