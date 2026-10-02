@@ -263,8 +263,8 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
 
   const planned = buildPlan(items, today);
   
-  // Sort planned entries: prioritize high effort items first for placement
-  const sortedForLoad = [...planned].sort((a, b) => b.item.effort - a.item.effort);
+  // Sort planned entries: Highest score first to ensure critical work gets primary slots
+  const sortedForLoad = [...planned].sort((a, b) => b.score - a.score);
 
   for (const entry of sortedForLoad) {
     const dueDayIndex = entry.daysUntilDue;
@@ -303,7 +303,7 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
       target.entries.push(entry);
       target.used += entry.item.effort;
     } else {
-      // Strategy 4: Spillover - prioritize the least loaded day, even if it slightly overloads
+      // Strategy 4: Spillover - prioritize the least loaded day to flatten the curve
       const absoluteLeast = days.reduce((prev, curr) => (curr.used < prev.used ? curr : prev));
       absoluteLeast.entries.push(entry);
       absoluteLeast.used += entry.item.effort;
