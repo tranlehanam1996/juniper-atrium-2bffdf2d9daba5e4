@@ -66,12 +66,10 @@ export function priorityFor(item: LifeRecord, today = localDay(), contextItems: 
     }
 
     if (overdueDays > 30) {
-      // Refined decay: Low impact items decay faster to reduce noise
       const decayFactor = item.impact < 3 ? 3.0 : 2.0;
       const decay = Math.min(overdueDays - 30, 90) * decayFactor;
       score -= decay;
       
-      // Recovery boost: Extremely overdue high-impact items get a second wind
       if (item.impact >= 4 && overdueDays > 60) {
         score += 30;
         reasons.push("critically neglected");
@@ -95,7 +93,6 @@ export function priorityFor(item: LifeRecord, today = localDay(), contextItems: 
     reasons.push(`due in ${daysUntilDue} day(s)`);
   }
 
-  // Weekend Bonus: Suggest tasks that fall on Saturday/Sunday (0=Sun, 6=Sat)
   const dueDateObj = new Date(`${item.dueDate}T00:00:00Z`);
   const dayOfWeek = dueDateObj.getUTCDay();
   if (dayOfWeek === 0 || dayOfWeek === 6) {
@@ -103,22 +100,18 @@ export function priorityFor(item: LifeRecord, today = localDay(), contextItems: 
     reasons.push("weekend window");
   }
 
-  // Focus Window: Stronger boost for items due in the immediate 48-hour window
   if (daysUntilDue >= 0 && daysUntilDue <= 2) {
     const windowBoost = (3 - daysUntilDue) * 7;
     score += windowBoost;
     reasons.push("focus window");
   }
 
-  // Near-term urgency multiplier for items due in 0-2 days
   if (daysUntilDue >= 0 && daysUntilDue <= 2) {
     const multiplier = 1 + (3 - daysUntilDue) * 0.05;
     score *= multiplier;
     if (multiplier > 1) reasons.push("near-term urgency");
   }
 
-  // Effort penalty adjusted by category and impact
-  // High-impact items are penalized less for their effort to ensure they stay visible
   let effortWeight = item.impact >= 4 ? 0.02 : (item.impact === 3 ? 0.05 : 0.07);
   if (item.category === "Health") effortWeight *= 0.7;
   if (item.category === "Supplies") effortWeight *= 1.2;
@@ -126,14 +119,12 @@ export function priorityFor(item: LifeRecord, today = localDay(), contextItems: 
   const effortPenalty = Math.min(item.effort * effortWeight, 15);
   score -= effortPenalty;
 
-  // High-effort High-impact balancing: ensure big important tasks aren't fully suppressed
   if (item.impact >= 5 && item.effort > 120) {
     score += 8;
     reasons.push("major milestone");
     isMilestone = true;
   }
 
-  // Batching Bonus: High-effort tasks are more attractive if other tasks of the same category are due soon
   if (item.effort > 60) {
     const batchCount = contextItems.filter(i => 
       i.id !== item.id && 
@@ -147,13 +138,11 @@ export function priorityFor(item: LifeRecord, today = localDay(), contextItems: 
     }
   }
 
-  // Quick Win Bonus: Higher impact items with low effort get a stronger boost
   if (item.impact >= 4 && item.effort <= 15) {
     score += (item.impact === 5 ? 18 : 12);
     reasons.push("quick win");
     isQuickWin = true;
   } else if (item.effort <= 15) {
-    // Low-friction boost: encourage small maintenance tasks
     score += 5;
     reasons.push("low friction");
   }
@@ -163,7 +152,6 @@ export function priorityFor(item: LifeRecord, today = localDay(), contextItems: 
     reasons.push("already in progress");
   }
   if (item.recurrence && item.recurrence !== "none") {
-    // High-impact recurring (like meds) get more weight
     const recurrenceBonus = item.impact >= 4 ? 8 : 4;
     score += recurrenceBonus;
     reasons.push("recurring habit");
@@ -173,13 +161,11 @@ export function priorityFor(item: LifeRecord, today = localDay(), contextItems: 
       reasons.push("daily routine");
     }
 
-    // Low-effort/Low-impact maintenance: slightly boost if it's a 'light' task
     if (item.impact < 3 && item.effort <= 20) {
       score += 3;
       reasons.push("light maintenance");
     }
 
-    // Maintenance grace: low impact recurring items don't spike priority as aggressively when slightly overdue
     if (daysUntilDue < 0 && daysUntilDue >= -3 && item.impact < 3) {
       score -= 15;
       reasons.push("maintenance grace");
@@ -263,13 +249,11 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
 
   const planned = buildPlan(items, today);
   
-  // Sort planned entries: Highest score first to ensure critical work gets primary slots
   const sortedForLoad = [...planned].sort((a, b) => b.score - a.score);
 
   for (const entry of sortedForLoad) {
     const dueDayIndex = entry.daysUntilDue;
     
-    // Strategy 1: Try to fit it on its due date if it's within the week and under soft capacity
     if (dueDayIndex >= 0 && dueDayIndex < 7) {
       const dueDay = days[dueDayIndex];
       if (dueDay.used + entry.item.effort <= softCapacity) {
@@ -279,7 +263,6 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
       }
     }
 
-    // Strategy 2: Critical, Overdue, or High-Impact items get priority across any available slot under full capacity
     if (entry.isCritical || dueDayIndex < 0 || entry.item.impact >= 5) {
       const earliest = days.find(day => day.used + entry.item.effort <= capacity);
       if (earliest) {
@@ -289,7 +272,6 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
       }
     }
 
-    // Strategy 3: For non-critical future items, try any day up to the due date that has space
     const candidates = days.filter((_, index) => {
       if (dueDayIndex < 0) return true;
       return index <= Math.min(6, dueDayIndex);
@@ -303,7 +285,6 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
       target.entries.push(entry);
       target.used += entry.item.effort;
     } else {
-      // Strategy 4: Spillover - prioritize the least loaded day to flatten the curve
       const absoluteLeast = days.reduce((prev, curr) => (curr.used < prev.used ? curr : prev));
       absoluteLeast.entries.push(entry);
       absoluteLeast.used += entry.item.effort;
