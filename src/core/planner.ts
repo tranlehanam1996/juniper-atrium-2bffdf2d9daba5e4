@@ -107,7 +107,9 @@ export function priorityFor(item: LifeRecord, today = localDay(), contextItems: 
   }
 
   if (daysUntilDue >= 0 && daysUntilDue <= 2) {
-    const multiplier = 1 + (3 - daysUntilDue) * 0.05;
+    // High impact items accelerate more quickly as they enter the focus window
+    const impactAccel = item.impact >= 4 ? 0.12 : 0.05;
+    const multiplier = 1 + (3 - daysUntilDue) * impactAccel;
     score *= multiplier;
     if (multiplier > 1) reasons.push("near-term urgency");
   }
@@ -142,6 +144,10 @@ export function priorityFor(item: LifeRecord, today = localDay(), contextItems: 
     score += (item.impact === 5 ? 18 : 12);
     reasons.push("quick win");
     isQuickWin = true;
+  } else if (item.effort <= 10) {
+    // Extra boost for extremely low-friction tasks
+    score += 8;
+    reasons.push("low friction");
   } else if (item.effort <= 15) {
     score += 5;
     reasons.push("low friction");
