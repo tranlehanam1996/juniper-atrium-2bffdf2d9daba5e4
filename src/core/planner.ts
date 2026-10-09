@@ -211,11 +211,21 @@ export function focusedPlan(items: readonly LifeRecord[], today = localDay(), qu
     entry.isCritical ||
     (entry.daysUntilDue < 0 && entry.item.impact >= 3) ||
     (entry.daysUntilDue <= 0 && entry.score > 75) || 
-    (entry.item.impact >= 4 && entry.daysUntilDue <= 4) ||
-    (entry.isQuickWin && entry.daysUntilDue <= 7) ||
-    (entry.item.impact >= 3 && entry.item.effort <= 20 && entry.daysUntilDue <= 7) ||
-    (entry.item.impact >= 3 && entry.daysUntilDue <= 2) ||
+    (entry.item.impact >= 4 && entry.daysUntilDue <= 3) ||
+    (entry.isQuickWin && entry.daysUntilDue <= 4) ||
+    (entry.item.impact >= 3 && entry.item.effort <= 20 && entry.daysUntilDue <= 4) ||
+    (entry.item.impact >= 3 && entry.daysUntilDue <= 1) ||
     entry.score > priorityThreshold
+  );
+}
+
+export function urgencyPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    entry.isCritical ||
+    entry.daysUntilDue < 0 ||
+    entry.daysUntilDue === 0 ||
+    (entry.item.impact >= 5 && entry.daysUntilDue <= 2)
   );
 }
 
