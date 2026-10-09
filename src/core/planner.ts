@@ -203,6 +203,7 @@ export function focusedPlan(items: readonly LifeRecord[], today = localDay(), qu
   return plan.filter(entry => 
     entry.item.pinned || 
     entry.isCritical ||
+    (entry.daysUntilDue < 0 && entry.item.impact >= 3) ||
     (entry.daysUntilDue <= 0 && entry.score > 75) || 
     (entry.item.impact >= 4 && entry.daysUntilDue <= 4) ||
     (entry.isQuickWin && entry.daysUntilDue <= 7) ||
