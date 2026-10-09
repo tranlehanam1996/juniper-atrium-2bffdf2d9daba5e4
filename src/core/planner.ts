@@ -101,13 +101,11 @@ export function priorityFor(item: LifeRecord, today = localDay(), contextItems: 
   }
 
   if (daysUntilDue >= 0 && daysUntilDue <= 2) {
+    // Combine window boost and acceleration
     const windowBoost = (3 - daysUntilDue) * 7;
     score += windowBoost;
     reasons.push("focus window");
-  }
 
-  if (daysUntilDue >= 0 && daysUntilDue <= 2) {
-    // High impact items accelerate more quickly as they enter the focus window
     const impactAccel = item.impact >= 4 ? 0.12 : 0.05;
     const multiplier = 1 + (3 - daysUntilDue) * impactAccel;
     score *= multiplier;
@@ -259,6 +257,16 @@ export function highImpactPlan(items: readonly LifeRecord[], today = localDay(),
   const plan = buildPlan(items, today, query);
   return plan.filter(entry => 
     entry.item.impact >= 4 ||
+    entry.isMilestone ||
+    entry.isCritical
+  );
+}
+
+export function deepWorkPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  // Deep Work focuses on high-effort, high-impact items that need focused time
+  return plan.filter(entry => 
+    (entry.item.effort >= 60 && entry.item.impact >= 3) ||
     entry.isMilestone ||
     entry.isCritical
   );
