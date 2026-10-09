@@ -232,6 +232,19 @@ export function lowEnergyPlan(items: readonly LifeRecord[], today = localDay(), 
   );
 }
 
+export function balancedPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  // Balanced plan mixes critical/high-impact items with quick wins and maintenance
+  return plan.filter(entry => 
+    entry.item.pinned ||
+    entry.isCritical ||
+    entry.isQuickWin ||
+    (entry.item.impact >= 4 && entry.daysUntilDue <= 7) ||
+    (entry.item.impact >= 3 && entry.daysUntilDue <= 3) ||
+    (entry.item.effort <= 30 && entry.daysUntilDue <= 7)
+  );
+}
+
 export function summarize(items: readonly LifeRecord[], today = localDay()): PlanSummary {
   return items.reduce<PlanSummary>((summary, item) => {
     summary.total += 1;
