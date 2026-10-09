@@ -66,7 +66,7 @@ export function priorityFor(item: LifeRecord, today = localDay(), contextItems: 
     }
 
     if (overdueDays > 30) {
-      const decayFactor = item.impact < 3 ? 3.0 : 2.0;
+      const decayFactor = item.impact < 3 ? 4.0 : 2.0;
       const decay = Math.min(overdueDays - 30, 90) * decayFactor;
       score -= decay;
       
@@ -279,6 +279,16 @@ export function maintenancePlan(items: readonly LifeRecord[], today = localDay()
     entry.item.recurrence && entry.item.recurrence !== "none" ||
     entry.item.category === "Grooming" ||
     (entry.item.impact <= 3 && entry.item.effort <= 45)
+  );
+}
+
+export function wellnessPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  // Wellness plan highlights low-friction, positive-impact items that aren't critical but improve quality of life
+  return plan.filter(entry => 
+    (entry.item.impact <= 3 && entry.item.effort <= 30 && entry.daysUntilDue <= 7) ||
+    entry.isQuickWin ||
+    entry.item.category === "Exercise"
   );
 }
 
