@@ -161,7 +161,7 @@ export function priorityFor(item: LifeRecord, today = localDay(), contextItems: 
     reasons.push("recurring habit");
 
     if (item.recurrence === "daily") {
-      score += 4;
+      score += 6;
       reasons.push("daily routine");
     }
 
@@ -269,6 +269,16 @@ export function deepWorkPlan(items: readonly LifeRecord[], today = localDay(), q
     (entry.item.effort >= 60 && entry.item.impact >= 3) ||
     entry.isMilestone ||
     entry.isCritical
+  );
+}
+
+export function maintenancePlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  // Maintenance focuses on recurring low-impact habits and general upkeep
+  return plan.filter(entry => 
+    entry.item.recurrence && entry.item.recurrence !== "none" ||
+    entry.item.category === "Grooming" ||
+    (entry.item.impact <= 3 && entry.item.effort <= 45)
   );
 }
 
