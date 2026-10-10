@@ -74,6 +74,7 @@ export function priorityFor(item: LifeRecord, today = localDay(), contextItems: 
       if (item.impact >= 4 && overdueDays > 60) {
         score += 30;
         reasons.push("critically neglected");
+        isCritical = true; // Re-flag as critical if high impact and severely neglected
       }
 
       if (decay > 15) reasons.push("priority decayed (stale)");
@@ -267,6 +268,15 @@ export function deepWorkPlan(items: readonly LifeRecord[], today = localDay(), q
     (entry.item.effort >= 60 && entry.item.impact >= 3) ||
     entry.isMilestone ||
     entry.isCritical
+  );
+}
+
+export function highFocusPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    entry.isCritical ||
+    (entry.item.impact >= 4 && entry.daysUntilDue <= 3) ||
+    (entry.item.pinned && entry.item.impact >= 3)
   );
 }
 
