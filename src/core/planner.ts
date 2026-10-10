@@ -66,7 +66,8 @@ export function priorityFor(item: LifeRecord, today = localDay(), contextItems: 
     }
 
     if (overdueDays > 30) {
-      const decayFactor = item.impact < 3 ? 4.0 : 2.0;
+      // Refine decay: high impact items decay slower to keep them visible
+      const decayFactor = item.impact < 3 ? 3.5 : 1.5;
       const decay = Math.min(overdueDays - 30, 90) * decayFactor;
       score -= decay;
       
@@ -101,7 +102,6 @@ export function priorityFor(item: LifeRecord, today = localDay(), contextItems: 
   }
 
   if (daysUntilDue >= 0 && daysUntilDue <= 2) {
-    // Combine window boost and acceleration
     const windowBoost = (3 - daysUntilDue) * 7;
     score += windowBoost;
     reasons.push("focus window");
@@ -143,7 +143,6 @@ export function priorityFor(item: LifeRecord, today = localDay(), contextItems: 
     reasons.push("quick win");
     isQuickWin = true;
   } else if (item.effort <= 10) {
-    // Extra boost for extremely low-friction tasks
     score += 8;
     reasons.push("low friction");
   } else if (item.effort <= 15) {
@@ -156,7 +155,8 @@ export function priorityFor(item: LifeRecord, today = localDay(), contextItems: 
     reasons.push("already in progress");
   }
   if (item.recurrence && item.recurrence !== "none") {
-    const recurrenceBonus = item.impact >= 4 ? 8 : 4;
+    // Habit boost: high impact recurring tasks get a stronger push to prevent lapse
+    const recurrenceBonus = item.impact >= 4 ? 12 : 6;
     score += recurrenceBonus;
     reasons.push("recurring habit");
 
@@ -242,7 +242,6 @@ export function lowEnergyPlan(items: readonly LifeRecord[], today = localDay(), 
 
 export function balancedPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
   const plan = buildPlan(items, today, query);
-  // Balanced plan mixes critical/high-impact items with quick wins and maintenance
   return plan.filter(entry => 
     entry.item.pinned ||
     entry.isCritical ||
@@ -264,7 +263,6 @@ export function highImpactPlan(items: readonly LifeRecord[], today = localDay(),
 
 export function deepWorkPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
   const plan = buildPlan(items, today, query);
-  // Deep Work focuses on high-effort, high-impact items that need focused time
   return plan.filter(entry => 
     (entry.item.effort >= 60 && entry.item.impact >= 3) ||
     entry.isMilestone ||
@@ -274,7 +272,6 @@ export function deepWorkPlan(items: readonly LifeRecord[], today = localDay(), q
 
 export function maintenancePlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
   const plan = buildPlan(items, today, query);
-  // Maintenance focuses on recurring low-impact habits and general upkeep
   return plan.filter(entry => 
     entry.item.recurrence && entry.item.recurrence !== "none" ||
     entry.item.category === "Grooming" ||
@@ -284,7 +281,6 @@ export function maintenancePlan(items: readonly LifeRecord[], today = localDay()
 
 export function wellnessPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
   const plan = buildPlan(items, today, query);
-  // Wellness plan highlights low-friction, positive-impact items that aren't critical but improve quality of life
   return plan.filter(entry => 
     (entry.item.impact <= 3 && entry.item.effort <= 30 && entry.daysUntilDue <= 7) ||
     entry.isQuickWin ||
@@ -294,7 +290,6 @@ export function wellnessPlan(items: readonly LifeRecord[], today = localDay(), q
 
 export function restorativePlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
   const plan = buildPlan(items, today, query);
-  // Restorative plan focus on extremely low effort items to rebuild momentum
   return plan.filter(entry => 
     entry.item.effort <= 15 ||
     (entry.item.category === "Exercise" && entry.item.effort <= 30) ||
