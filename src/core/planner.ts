@@ -292,6 +292,16 @@ export function wellnessPlan(items: readonly LifeRecord[], today = localDay(), q
   );
 }
 
+export function restorativePlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  // Restorative plan focus on extremely low effort items to rebuild momentum
+  return plan.filter(entry => 
+    entry.item.effort <= 15 ||
+    (entry.item.category === "Exercise" && entry.item.effort <= 30) ||
+    (entry.item.impact >= 4 && entry.item.effort <= 20)
+  );
+}
+
 export function summarize(items: readonly LifeRecord[], today = localDay()): PlanSummary {
   return items.reduce<PlanSummary>((summary, item) => {
     summary.total += 1;
