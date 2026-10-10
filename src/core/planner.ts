@@ -302,9 +302,18 @@ export function wellnessPlan(items: readonly LifeRecord[], today = localDay(), q
 export function restorativePlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
   const plan = buildPlan(items, today, query);
   return plan.filter(entry => 
-    entry.item.effort <= 15 ||
-    (entry.item.category === "Exercise" && entry.item.effort <= 30) ||
-    (entry.item.impact >= 4 && entry.item.effort <= 20)
+    entry.item.effort <= 12 || 
+    (entry.item.category === "Exercise" && entry.item.effort <= 20) ||
+    (entry.isQuickWin && entry.item.effort <= 15)
+  );
+}
+
+export function recoveryPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    entry.daysUntilDue < 0 && 
+    entry.item.impact <= 3 && 
+    entry.item.effort <= 45
   );
 }
 
