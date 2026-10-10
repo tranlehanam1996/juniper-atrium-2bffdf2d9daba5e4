@@ -276,7 +276,8 @@ export function highFocusPlan(items: readonly LifeRecord[], today = localDay(), 
   return plan.filter(entry => 
     entry.isCritical ||
     (entry.item.impact >= 4 && entry.daysUntilDue <= 3) ||
-    (entry.item.pinned && entry.item.impact >= 3)
+    (entry.item.pinned && entry.item.impact >= 3) ||
+    (entry.isMilestone && entry.daysUntilDue <= 2)
   );
 }
 
@@ -331,7 +332,10 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
 
   const planned = buildPlan(items, today);
   
-  const sortedForLoad = [...planned].sort((a, b) => b.score - a.score);
+  const sortedForLoad = [...planned].sort((a, b) => {
+    if (a.isCritical !== b.isCritical) return a.isCritical ? -1 : 1;
+    return b.score - a.score;
+  });
 
   for (const entry of sortedForLoad) {
     const dueDayIndex = entry.daysUntilDue;
