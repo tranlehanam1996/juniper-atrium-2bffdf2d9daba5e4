@@ -279,6 +279,15 @@ export function deepWorkPlan(items: readonly LifeRecord[], today = localDay(), q
   );
 }
 
+export function deepFocusPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    (entry.item.effort >= 90 && entry.item.impact >= 4) ||
+    (entry.isMilestone && entry.daysUntilDue <= 7) ||
+    (entry.item.pinned && entry.item.effort >= 60)
+  );
+}
+
 export function highFocusPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
   const plan = buildPlan(items, today, query);
   return plan.filter(entry => 
