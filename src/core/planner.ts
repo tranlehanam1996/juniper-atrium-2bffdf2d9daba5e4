@@ -241,6 +241,14 @@ export function lowEnergyPlan(items: readonly LifeRecord[], today = localDay(), 
   );
 }
 
+export function lowFrictionPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    entry.item.effort <= 15 || 
+    (entry.isQuickWin && entry.item.effort <= 20)
+  );
+}
+
 export function balancedPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
   const plan = buildPlan(items, today, query);
   return plan.filter(entry => 
