@@ -317,6 +317,15 @@ export function recoveryPlan(items: readonly LifeRecord[], today = localDay(), q
   );
 }
 
+export function sprintPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    entry.item.impact >= 4 ||
+    entry.isCritical ||
+    (entry.item.impact >= 3 && entry.item.effort <= 45)
+  );
+}
+
 export function summarize(items: readonly LifeRecord[], today = localDay()): PlanSummary {
   return items.reduce<PlanSummary>((summary, item) => {
     summary.total += 1;
@@ -343,6 +352,7 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
   
   const sortedForLoad = [...planned].sort((a, b) => {
     if (a.isCritical !== b.isCritical) return a.isCritical ? -1 : 1;
+    if (a.isMilestone !== b.isMilestone) return a.isMilestone ? -1 : 1;
     return b.score - a.score;
   });
 
