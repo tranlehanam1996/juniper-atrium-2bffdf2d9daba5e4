@@ -334,6 +334,15 @@ export function sprintPlan(items: readonly LifeRecord[], today = localDay(), que
   );
 }
 
+export function steadyStatePlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    (entry.item.impact >= 3 && entry.item.effort >= 30 && entry.item.effort <= 90 && entry.daysUntilDue <= 14) ||
+    (entry.item.recurrence && entry.item.recurrence !== "none" && entry.daysUntilDue <= 7) ||
+    (entry.item.pinned && !entry.isCritical)
+  );
+}
+
 export function summarize(items: readonly LifeRecord[], today = localDay()): PlanSummary {
   return items.reduce<PlanSummary>((summary, item) => {
     summary.total += 1;
