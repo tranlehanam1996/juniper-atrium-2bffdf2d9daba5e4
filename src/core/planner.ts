@@ -352,6 +352,15 @@ export function steadyStatePlan(items: readonly LifeRecord[], today = localDay()
   );
 }
 
+export function zenPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    entry.item.impact <= 2 && 
+    entry.item.effort <= 20 && 
+    !entry.isCritical
+  );
+}
+
 export function summarize(items: readonly LifeRecord[], today = localDay()): PlanSummary {
   return items.reduce<PlanSummary>((summary, item) => {
     summary.total += 1;
