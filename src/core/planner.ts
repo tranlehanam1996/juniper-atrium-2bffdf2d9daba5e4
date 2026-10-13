@@ -412,6 +412,16 @@ export function minimalistPlan(items: readonly LifeRecord[], today = localDay(),
   );
 }
 
+export function focusPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    entry.isCritical ||
+    entry.item.pinned ||
+    (entry.isQuickWin && entry.daysUntilDue <= 3) ||
+    (entry.item.impact >= 4 && entry.daysUntilDue <= 2)
+  );
+}
+
 export function summarize(items: readonly LifeRecord[], today = localDay()): PlanSummary {
   return items.reduce<PlanSummary>((summary, item) => {
     summary.total += 1;
