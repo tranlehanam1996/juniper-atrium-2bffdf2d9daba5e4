@@ -396,6 +396,22 @@ export function comfortPlan(items: readonly LifeRecord[], today = localDay(), qu
   );
 }
 
+export function essentialPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    entry.isCritical ||
+    entry.item.impact >= 5 ||
+    (entry.item.impact >= 4 && entry.daysUntilDue <= 3)
+  );
+}
+
+export function minimalistPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    entry.item.effort <= 10 && !entry.isCritical
+  );
+}
+
 export function summarize(items: readonly LifeRecord[], today = localDay()): PlanSummary {
   return items.reduce<PlanSummary>((summary, item) => {
     summary.total += 1;
