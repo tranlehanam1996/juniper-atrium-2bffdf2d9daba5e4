@@ -235,7 +235,7 @@ export function quickWinPlan(items: readonly LifeRecord[], today = localDay(), q
 export function lowEnergyPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
   const plan = buildPlan(items, today, query);
   return plan.filter(entry => 
-    (entry.item.effort <= 30 && (entry.score > 50 || entry.daysUntilDue <= 1)) ||
+    (entry.item.effort <= 20 && (entry.score > 60 || entry.daysUntilDue <= 1)) ||
     entry.isQuickWin
   );
 }
@@ -385,6 +385,14 @@ export function highEnergyPlan(items: readonly LifeRecord[], today = localDay(),
     entry.isMilestone ||
     (entry.item.impact >= 4 && entry.daysUntilDue <= 14) ||
     (entry.item.effort >= 60 && entry.item.impact >= 3 && entry.daysUntilDue <= 7)
+  );
+}
+
+export function comfortPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    (!entry.isCritical && entry.item.effort <= 15 && entry.item.impact <= 3) ||
+    (entry.isQuickWin && entry.item.impact <= 2)
   );
 }
 
