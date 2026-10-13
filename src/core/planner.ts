@@ -458,6 +458,11 @@ export function burstPlan(items: readonly LifeRecord[], today = localDay(), quer
   );
 }
 
+export function microWinPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => entry.item.effort <= 5);
+}
+
 export function summarize(items: readonly LifeRecord[], today = localDay()): PlanSummary {
   return items.reduce<PlanSummary>((summary, item) => {
     summary.total += 1;
