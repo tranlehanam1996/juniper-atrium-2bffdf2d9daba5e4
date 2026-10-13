@@ -121,7 +121,7 @@ export function priorityFor(item: LifeRecord, today = localDay(), contextItems: 
   score -= effortPenalty;
 
   if (item.impact >= 5 && item.effort > 120) {
-    score += 8;
+    score += 12;
     reasons.push("major milestone");
     isMilestone = true;
   }
@@ -156,7 +156,6 @@ export function priorityFor(item: LifeRecord, today = localDay(), contextItems: 
     reasons.push("already in progress");
   }
   if (item.recurrence && item.recurrence !== "none") {
-    // Habit boost: high impact recurring tasks get a push, but capped to prevent habit-bloat
     const recurrenceBonus = item.impact >= 4 ? 8 : 4;
     score += recurrenceBonus;
     reasons.push("recurring habit");
@@ -367,6 +366,16 @@ export function gentlePlan(items: readonly LifeRecord[], today = localDay(), que
     entry.item.effort <= 20 && 
     entry.item.impact <= 3 &&
     !entry.isCritical
+  );
+}
+
+export function highEnergyPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    entry.isCritical ||
+    entry.isMilestone ||
+    (entry.item.impact >= 4 && entry.daysUntilDue <= 14) ||
+    (entry.item.effort >= 60 && entry.item.impact >= 3 && entry.daysUntilDue <= 7)
   );
 }
 
