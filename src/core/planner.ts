@@ -422,6 +422,23 @@ export function focusPlan(items: readonly LifeRecord[], today = localDay(), quer
   );
 }
 
+export function highAlertPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    entry.isCritical ||
+    (entry.item.impact >= 5 && entry.daysUntilDue <= 1)
+  );
+}
+
+export function mindlessPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    entry.item.effort <= 10 && 
+    entry.item.impact <= 3 &&
+    !entry.isCritical
+  );
+}
+
 export function summarize(items: readonly LifeRecord[], today = localDay()): PlanSummary {
   return items.reduce<PlanSummary>((summary, item) => {
     summary.total += 1;
