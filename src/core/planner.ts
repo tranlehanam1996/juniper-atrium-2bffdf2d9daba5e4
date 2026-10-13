@@ -156,7 +156,7 @@ export function priorityFor(item: LifeRecord, today = localDay(), contextItems: 
     reasons.push("already in progress");
   }
   if (item.recurrence && item.recurrence !== "none") {
-    const recurrenceBonus = item.impact >= 4 ? 8 : 4;
+    const recurrenceBonus = item.impact >= 4 ? 10 : 4;
     score += recurrenceBonus;
     reasons.push("recurring habit");
 
@@ -166,7 +166,7 @@ export function priorityFor(item: LifeRecord, today = localDay(), contextItems: 
     }
 
     if (item.impact < 3 && item.effort <= 20) {
-      score += 3;
+      score += 2;
       reasons.push("light maintenance");
     }
 
@@ -366,6 +366,15 @@ export function gentlePlan(items: readonly LifeRecord[], today = localDay(), que
     entry.item.effort <= 20 && 
     entry.item.impact <= 3 &&
     !entry.isCritical
+  );
+}
+
+export function lowPressurePlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    (entry.item.effort <= 15 && entry.daysUntilDue <= 7) ||
+    (entry.isQuickWin && entry.daysUntilDue <= 3) ||
+    (entry.item.recurrence !== "none" && entry.item.impact <= 2 && entry.item.effort <= 15)
   );
 }
 
