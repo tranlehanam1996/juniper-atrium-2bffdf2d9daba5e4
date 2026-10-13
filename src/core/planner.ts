@@ -156,13 +156,13 @@ export function priorityFor(item: LifeRecord, today = localDay(), contextItems: 
     reasons.push("already in progress");
   }
   if (item.recurrence && item.recurrence !== "none") {
-    // Habit boost: high impact recurring tasks get a stronger push to prevent lapse
-    const recurrenceBonus = item.impact >= 4 ? 12 : 6;
+    // Habit boost: high impact recurring tasks get a push, but capped to prevent habit-bloat
+    const recurrenceBonus = item.impact >= 4 ? 8 : 4;
     score += recurrenceBonus;
     reasons.push("recurring habit");
 
     if (item.recurrence === "daily") {
-      score += 6;
+      score += 4;
       reasons.push("daily routine");
     }
 
@@ -357,6 +357,15 @@ export function zenPlan(items: readonly LifeRecord[], today = localDay(), query 
   return plan.filter(entry => 
     entry.item.impact <= 2 && 
     entry.item.effort <= 20 && 
+    !entry.isCritical
+  );
+}
+
+export function gentlePlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    entry.item.effort <= 20 && 
+    entry.item.impact <= 3 &&
     !entry.isCritical
   );
 }
