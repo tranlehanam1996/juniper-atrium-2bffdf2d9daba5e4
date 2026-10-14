@@ -482,6 +482,15 @@ export function balancedEnergyPlan(items: readonly LifeRecord[], today = localDa
   );
 }
 
+export function routineBalancePlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    (entry.item.recurrence !== "none" && entry.item.effort <= 45) ||
+    (entry.item.impact >= 4 && entry.item.effort <= 30) ||
+    entry.isQuickWin
+  );
+}
+
 export function summarize(items: readonly LifeRecord[], today = localDay()): PlanSummary {
   return items.reduce<PlanSummary>((summary, item) => {
     summary.total += 1;
