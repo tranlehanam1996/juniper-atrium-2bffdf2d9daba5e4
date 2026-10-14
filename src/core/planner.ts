@@ -272,7 +272,7 @@ export function highImpactPlan(items: readonly LifeRecord[], today = localDay(),
 export function deepWorkPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
   const plan = buildPlan(items, today, query);
   return plan.filter(entry => 
-    (entry.item.effort >= 60 && entry.item.impact >= 3) ||
+    (entry.item.effort >= 60 && entry.item.impact >= 4) ||
     entry.isMilestone ||
     entry.isCritical
   );
