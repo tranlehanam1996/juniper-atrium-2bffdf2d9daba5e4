@@ -464,6 +464,24 @@ export function microWinPlan(items: readonly LifeRecord[], today = localDay(), q
   return plan.filter(entry => entry.item.effort <= 5);
 }
 
+export function hyperFocusPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    entry.isCritical ||
+    entry.item.impact >= 4 ||
+    (entry.daysUntilDue <= 1 && entry.item.impact >= 3)
+  );
+}
+
+export function balancedEnergyPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    entry.item.impact >= 3 && 
+    entry.item.effort >= 15 && 
+    entry.item.effort <= 60
+  );
+}
+
 export function summarize(items: readonly LifeRecord[], today = localDay()): PlanSummary {
   return items.reduce<PlanSummary>((summary, item) => {
     summary.total += 1;
