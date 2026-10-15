@@ -528,6 +528,22 @@ export function sustainablePacePlan(items: readonly LifeRecord[], today = localD
   );
 }
 
+export function momentumPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    (entry.item.effort <= 20 && entry.daysUntilDue <= 3) ||
+    entry.isQuickWin
+  );
+}
+
+export function recoverySprintPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    (entry.daysUntilDue < 0 && entry.item.effort <= 60) ||
+    (entry.isCritical && entry.item.effort <= 45)
+  );
+}
+
 export function summarize(items: readonly LifeRecord[], today = localDay()): PlanSummary {
   return items.reduce<PlanSummary>((summary, item) => {
     summary.total += 1;
