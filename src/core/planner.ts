@@ -519,6 +519,15 @@ export function gentleRhythmPlan(items: readonly LifeRecord[], today = localDay(
   );
 }
 
+export function sustainablePacePlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    (!entry.isCritical && entry.item.effort <= 40 && entry.item.impact >= 3) ||
+    (entry.isQuickWin && entry.item.effort <= 15) ||
+    (entry.item.recurrence !== "none" && entry.item.effort <= 30)
+  );
+}
+
 export function summarize(items: readonly LifeRecord[], today = localDay()): PlanSummary {
   return items.reduce<PlanSummary>((summary, item) => {
     summary.total += 1;
