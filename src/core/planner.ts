@@ -334,6 +334,16 @@ export function recoveryPlan(items: readonly LifeRecord[], today = localDay(), q
   );
 }
 
+export function adaptiveRecoveryPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    entry.isCritical || 
+    (entry.daysUntilDue < 0 && entry.item.impact >= 4 && entry.item.effort <= 60) ||
+    (entry.isQuickWin && entry.daysUntilDue < 0) ||
+    (entry.item.impact >= 3 && entry.item.effort <= 30 && entry.daysUntilDue <= 1)
+  );
+}
+
 export function sprintPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
   const plan = buildPlan(items, today, query);
   return plan.filter(entry => 
