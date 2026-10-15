@@ -113,6 +113,13 @@ export function priorityFor(item: LifeRecord, today = localDay(), contextItems: 
     if (multiplier > 1) reasons.push("near-term urgency");
   }
 
+  // Energy Efficiency: High impact for low effort is a huge win
+  const efficiency = item.impact / (item.effort / 15);
+  if (efficiency > 3) {
+    score += 12;
+    reasons.push("high-efficiency task");
+  }
+
   let effortWeight = item.impact >= 4 ? 0.02 : (item.impact === 3 ? 0.05 : 0.07);
   if (item.category === "Health") effortWeight *= 0.7;
   if (item.category === "Supplies") effortWeight *= 1.2;
@@ -144,10 +151,10 @@ export function priorityFor(item: LifeRecord, today = localDay(), contextItems: 
     reasons.push("quick win");
     isQuickWin = true;
   } else if (item.effort <= 10) {
-    score += 8;
-    reasons.push("low friction");
-  } else if (item.effort <= 15) {
-    score += 5;
+    score += 10;
+    reasons.push("trivial friction");
+  } else if (item.effort <= 20) {
+    score += 6;
     reasons.push("low friction");
   }
 
