@@ -392,7 +392,8 @@ export function lowPressurePlan(items: readonly LifeRecord[], today = localDay()
   return plan.filter(entry => 
     (entry.item.effort <= 15 && entry.daysUntilDue <= 7) ||
     (entry.isQuickWin && entry.daysUntilDue <= 3) ||
-    (entry.item.recurrence !== "none" && entry.item.impact <= 2 && entry.item.effort <= 15)
+    (entry.item.recurrence !== "none" && entry.item.impact <= 2 && entry.item.effort <= 15) ||
+    (entry.item.effort <= 5)
   );
 }
 
@@ -493,9 +494,11 @@ export function hyperFocusPlan(items: readonly LifeRecord[], today = localDay(),
 export function balancedEnergyPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
   const plan = buildPlan(items, today, query);
   return plan.filter(entry => 
-    entry.item.impact >= 3 && 
+    (entry.item.impact >= 3 && 
     entry.item.effort >= 15 && 
-    entry.item.effort <= 60
+    entry.item.effort <= 60 && 
+    entry.daysUntilDue <= 7) ||
+    (entry.isQuickWin && entry.daysUntilDue <= 4)
   );
 }
 
