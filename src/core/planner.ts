@@ -544,6 +544,15 @@ export function recoverySprintPlan(items: readonly LifeRecord[], today = localDa
   );
 }
 
+export function quietPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    !entry.isCritical && 
+    entry.item.effort <= 15 && 
+    entry.item.impact <= 2
+  );
+}
+
 export function summarize(items: readonly LifeRecord[], today = localDay()): PlanSummary {
   return items.reduce<PlanSummary>((summary, item) => {
     summary.total += 1;
