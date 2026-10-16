@@ -589,6 +589,21 @@ export function highImpactSprintPlan(items: readonly LifeRecord[], today = local
   );
 }
 
+export function triagePlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    entry.isCritical || 
+    (entry.daysUntilDue < 0 && entry.item.impact >= 4)
+  );
+}
+
+export function staleMaintenancePlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    entry.daysUntilDue < -30 && entry.item.impact <= 2
+  );
+}
+
 export function summarize(items: readonly LifeRecord[], today = localDay()): PlanSummary {
   return items.reduce<PlanSummary>((summary, item) => {
     summary.total += 1;
