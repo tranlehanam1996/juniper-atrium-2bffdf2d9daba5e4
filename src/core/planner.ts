@@ -563,6 +563,14 @@ export function quietPlan(items: readonly LifeRecord[], today = localDay(), quer
   );
 }
 
+export function highEfficiencyPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    entry.isQuickWin || 
+    (entry.item.impact >= 3 && entry.item.effort <= 30 && entry.score > 80)
+  );
+}
+
 export function summarize(items: readonly LifeRecord[], today = localDay()): PlanSummary {
   return items.reduce<PlanSummary>((summary, item) => {
     summary.total += 1;
