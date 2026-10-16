@@ -622,6 +622,25 @@ export function triageUrgencyPlan(items: readonly LifeRecord[], today = localDay
   );
 }
 
+export function balancedRecoveryPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    entry.isCritical ||
+    (entry.daysUntilDue < 0 && entry.item.effort <= 45) ||
+    (entry.isQuickWin && entry.daysUntilDue < 0) ||
+    (entry.item.impact >= 3 && entry.item.effort <= 30 && entry.daysUntilDue <= 2)
+  );
+}
+
+export function deepMaintenancePlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    (entry.item.recurrence !== "none" && entry.item.effort >= 45) ||
+    (entry.item.category === "Grooming" && entry.item.effort >= 45) ||
+    (entry.item.impact <= 2 && entry.item.effort >= 60)
+  );
+}
+
 export function summarize(items: readonly LifeRecord[], today = localDay()): PlanSummary {
   return items.reduce<PlanSummary>((summary, item) => {
     summary.total += 1;
