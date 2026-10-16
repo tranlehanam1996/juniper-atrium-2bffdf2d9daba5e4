@@ -571,6 +571,24 @@ export function highEfficiencyPlan(items: readonly LifeRecord[], today = localDa
   );
 }
 
+export function lowCognitivePlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    entry.item.effort <= 15 && 
+    entry.item.impact <= 3 && 
+    !entry.isCritical
+  );
+}
+
+export function highImpactSprintPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    (entry.item.impact >= 4 && entry.daysUntilDue <= 3) ||
+    entry.isCritical ||
+    entry.isMilestone
+  );
+}
+
 export function summarize(items: readonly LifeRecord[], today = localDay()): PlanSummary {
   return items.reduce<PlanSummary>((summary, item) => {
     summary.total += 1;
