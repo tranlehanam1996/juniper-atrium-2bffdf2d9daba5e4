@@ -604,6 +604,24 @@ export function staleMaintenancePlan(items: readonly LifeRecord[], today = local
   );
 }
 
+export function calmPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    !entry.isCritical && 
+    entry.item.effort <= 30 && 
+    entry.daysUntilDue >= 0
+  );
+}
+
+export function triageUrgencyPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    entry.isCritical || 
+    (entry.daysUntilDue < 0 && entry.item.impact >= 3) ||
+    (entry.daysUntilDue === 0 && entry.item.impact >= 4)
+  );
+}
+
 export function summarize(items: readonly LifeRecord[], today = localDay()): PlanSummary {
   return items.reduce<PlanSummary>((summary, item) => {
     summary.total += 1;
