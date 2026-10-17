@@ -682,6 +682,15 @@ export function deepRecoveryPlan(items: readonly LifeRecord[], today = localDay(
   );
 }
 
+export function emergencyPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    entry.isCritical ||
+    (entry.item.impact >= 5 && entry.daysUntilDue <= 1) ||
+    (entry.daysUntilDue < -7 && entry.item.impact >= 4)
+  );
+}
+
 export function summarize(items: readonly LifeRecord[], today = localDay()): PlanSummary {
   return items.reduce<PlanSummary>((summary, item) => {
     summary.total += 1;
