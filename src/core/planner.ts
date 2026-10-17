@@ -514,9 +514,9 @@ export function routineBalancePlan(items: readonly LifeRecord[], today = localDa
 export function powerHourPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
   const plan = buildPlan(items, today, query);
   return plan.filter(entry => 
-    (entry.isQuickWin && entry.daysUntilDue <= 3) ||
-    (entry.item.impact >= 4 && entry.item.effort <= 30 && entry.daysUntilDue <= 3) ||
-    (entry.isCritical && entry.item.effort <= 45)
+    (entry.isQuickWin && entry.daysUntilDue <= 2) ||
+    (entry.item.impact >= 4 && entry.item.effort <= 20 && entry.daysUntilDue <= 3) ||
+    (entry.isCritical && entry.item.effort <= 30)
   );
 }
 
@@ -670,6 +670,15 @@ export function seasonalPlan(items: readonly LifeRecord[], today = localDay(), q
   return plan.filter(entry => 
     (entry.item.recurrence === "monthly" && entry.daysUntilDue <= 14) ||
     (entry.item.impact >= 4 && entry.daysUntilDue > 14 && entry.daysUntilDue <= 30)
+  );
+}
+
+export function deepRecoveryPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    (entry.item.effort <= 15 && entry.item.impact <= 3) ||
+    (entry.item.category === "Exercise" && entry.item.effort <= 20) ||
+    (entry.isQuickWin && entry.item.impact <= 2)
   );
 }
 
