@@ -580,6 +580,14 @@ export function lowCognitivePlan(items: readonly LifeRecord[], today = localDay(
   );
 }
 
+export function cognitiveLoadPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    (entry.item.impact >= 3 && entry.item.effort >= 20 && entry.item.effort <= 60) ||
+    (entry.item.impact >= 4 && entry.item.effort <= 45)
+  );
+}
+
 export function highImpactSprintPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
   const plan = buildPlan(items, today, query);
   return plan.filter(entry => 
