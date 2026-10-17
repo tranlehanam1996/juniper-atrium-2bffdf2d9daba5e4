@@ -649,6 +649,14 @@ export function deepMaintenancePlan(items: readonly LifeRecord[], today = localD
   );
 }
 
+export function batchingPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    (entry.item.effort >= 30 && entry.item.impact >= 3) ||
+    (entry.item.recurrence !== "none" && entry.item.effort >= 15)
+  ).sort((a, b) => a.item.category.localeCompare(b.item.category) || b.score - a.score);
+}
+
 export function summarize(items: readonly LifeRecord[], today = localDay()): PlanSummary {
   return items.reduce<PlanSummary>((summary, item) => {
     summary.total += 1;
