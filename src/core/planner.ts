@@ -657,6 +657,22 @@ export function batchingPlan(items: readonly LifeRecord[], today = localDay(), q
   ).sort((a, b) => a.item.category.localeCompare(b.item.category) || b.score - a.score);
 }
 
+export function microMomentumPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    entry.item.effort <= 10 && 
+    entry.item.impact >= 4
+  );
+}
+
+export function seasonalPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    (entry.item.recurrence === "monthly" && entry.daysUntilDue <= 14) ||
+    (entry.item.impact >= 4 && entry.daysUntilDue > 14 && entry.daysUntilDue <= 30)
+  );
+}
+
 export function summarize(items: readonly LifeRecord[], today = localDay()): PlanSummary {
   return items.reduce<PlanSummary>((summary, item) => {
     summary.total += 1;
