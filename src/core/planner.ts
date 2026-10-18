@@ -348,7 +348,7 @@ export function adaptiveRecoveryPlan(items: readonly LifeRecord[], today = local
     entry.isCritical || 
     (entry.daysUntilDue < 0 && entry.item.impact >= 4 && entry.item.effort <= 60) ||
     (entry.isQuickWin && entry.daysUntilDue < 0) ||
-    (entry.item.impact >= 3 && entry.item.effort <= 30 && entry.daysUntilDue <= 1)
+    (entry.item.impact >= 3 && entry.item.effort <= 30 && entry.daysUntilDue <= 2)
   );
 }
 
@@ -707,6 +707,15 @@ export function focusSprintsPlan(items: readonly LifeRecord[], today = localDay(
     (entry.item.impact >= 4 && entry.item.effort <= 45) ||
     (entry.isMilestone && entry.daysUntilDue <= 7)
   ).sort((a, b) => b.score - a.score);
+}
+
+export function reentryPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    entry.isQuickWin ||
+    (entry.item.effort <= 20 && entry.item.impact >= 3) ||
+    (entry.isCritical && entry.item.effort <= 30)
+  );
 }
 
 export function summarize(items: readonly LifeRecord[], today = localDay()): PlanSummary {
