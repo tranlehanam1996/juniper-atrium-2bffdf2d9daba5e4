@@ -66,7 +66,6 @@ export function priorityFor(item: LifeRecord, today = localDay(), contextItems: 
     }
 
     if (overdueDays > 30) {
-      // Refine decay: high impact items decay slower to keep them visible
       const decayFactor = item.impact < 3 ? 3.5 : 1.5;
       const decay = Math.min(overdueDays - 30, 90) * decayFactor;
       score -= decay;
@@ -74,7 +73,7 @@ export function priorityFor(item: LifeRecord, today = localDay(), contextItems: 
       if (item.impact >= 4 && overdueDays > 60) {
         score += 30;
         reasons.push("critically neglected");
-        isCritical = true; // Re-flag as critical if high impact and severely neglected
+        isCritical = true;
       }
 
       if (decay > 15) reasons.push("priority decayed (stale)");
@@ -113,9 +112,11 @@ export function priorityFor(item: LifeRecord, today = localDay(), contextItems: 
     if (multiplier > 1) reasons.push("near-term urgency");
   }
 
-  // Energy Efficiency: High impact for low effort is a huge win
   const efficiency = item.impact / (item.effort / 15);
-  if (efficiency > 3) {
+  if (efficiency > 4) {
+    score += 18;
+    reasons.push("exceptionally efficient");
+  } else if (efficiency > 2.5) {
     score += 12;
     reasons.push("high-efficiency task");
   }
@@ -566,8 +567,8 @@ export function quietPlan(items: readonly LifeRecord[], today = localDay(), quer
 export function highEfficiencyPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
   const plan = buildPlan(items, today, query);
   return plan.filter(entry => 
-    entry.isQuickWin || 
-    (entry.item.impact >= 3 && entry.item.effort <= 30 && entry.score > 80)
+    (entry.item.impact / (entry.item.effort / 15)) > 2.5 ||
+    entry.isQuickWin
   );
 }
 
