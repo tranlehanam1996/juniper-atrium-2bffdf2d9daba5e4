@@ -692,6 +692,23 @@ export function emergencyPlan(items: readonly LifeRecord[], today = localDay(), 
   );
 }
 
+export function lowWillpowerPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    (entry.item.effort <= 10 && !entry.isCritical) ||
+    entry.isQuickWin ||
+    (entry.item.recurrence !== "none" && entry.item.effort <= 15)
+  );
+}
+
+export function focusSprintsPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    (entry.item.impact >= 4 && entry.item.effort <= 45) ||
+    (entry.isMilestone && entry.daysUntilDue <= 7)
+  ).sort((a, b) => b.score - a.score);
+}
+
 export function summarize(items: readonly LifeRecord[], today = localDay()): PlanSummary {
   return items.reduce<PlanSummary>((summary, item) => {
     summary.total += 1;
