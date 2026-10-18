@@ -141,9 +141,9 @@ export function priorityFor(item: LifeRecord, today = localDay(), contextItems: 
       Math.abs(daysBetween(today, i.dueDate)) <= 2
     ).length;
     if (batchCount > 0) {
-      const bonus = Math.min(batchCount * 3, 10);
+      const bonus = Math.min(batchCount * 4, 15);
       score += bonus;
-      reasons.push("category batching");
+      reasons.push(`category batching (${batchCount} items)`);
     }
   }
 
@@ -715,6 +715,16 @@ export function reentryPlan(items: readonly LifeRecord[], today = localDay(), qu
     entry.isQuickWin ||
     (entry.item.effort <= 20 && entry.item.impact >= 3) ||
     (entry.isCritical && entry.item.effort <= 30)
+  );
+}
+
+export function balancedFlowPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => 
+    entry.isCritical ||
+    entry.isQuickWin ||
+    (entry.isMilestone && entry.daysUntilDue <= 14) ||
+    (entry.item.impact >= 3 && entry.item.effort <= 45 && entry.daysUntilDue <= 7)
   );
 }
 
