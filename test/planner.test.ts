@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { importJson } from "../src/core/exchange";
-import { buildPlan, daysBetween, priorityFor, suggestDailyLoad, summarize } from "../src/core/planner";
+import { buildPlan, clusterPlan, daysBetween, priorityFor, suggestDailyLoad, summarize } from "../src/core/planner";
 import { theme } from "../src/theme";
 import type { LifeRecord } from "../src/types";
 
@@ -26,6 +26,16 @@ describe("planning engine", () => {
   it("flags a day whose assigned effort exceeds capacity", () => {
     const week = suggestDailyLoad([item({ effort: 120 })], 60, "2026-08-19");
     expect(week.some((day) => day.overloaded)).toBe(true);
+  });
+  it("groups items that share a tight due-date window", () => {
+    const a = item({ id: "a", dueDate: "2026-08-20" });
+    const b = item({ id: "b", dueDate: "2026-08-21" });
+    const c = item({ id: "c", dueDate: "2026-08-22" });
+    const far = item({ id: "far", dueDate: "2026-09-10" });
+    const result = clusterPlan([a, b, c, far], "2026-08-19").map((entry) => entry.item.id);
+    expect(result).toContain("a");
+    expect(result).toContain("b");
+    expect(result).not.toContain("far");
   });
 });
 

@@ -137,6 +137,7 @@ export function priorityFor(item: LifeRecord, today = localDay(), contextItems: 
   if (item.effort > 60) {
     const batchCount = contextItems.filter(i => 
       i.id !== item.id && 
+      i.status !== "done" &&
       i.category === item.category && 
       Math.abs(daysBetween(today, i.dueDate)) <= 2
     ).length;
@@ -145,6 +146,17 @@ export function priorityFor(item: LifeRecord, today = localDay(), contextItems: 
       score += bonus;
       reasons.push(`category batching (${batchCount} items)`);
     }
+  }
+
+  const nearbyDueCount = contextItems.filter(i =>
+    i.id !== item.id &&
+    i.status !== "done" &&
+    Math.abs(daysBetween(item.dueDate, i.dueDate)) <= 2
+  ).length;
+  if (nearbyDueCount >= 2) {
+    const boost = Math.min(nearbyDueCount * 3, 12);
+    score += boost;
+    reasons.push(`deadline cluster (${nearbyDueCount} nearby)`);
   }
 
   if (item.impact >= 4 && item.effort <= 15) {
@@ -735,6 +747,17 @@ export function steadyProgressPlan(items: readonly LifeRecord[], today = localDa
     (entry.item.recurrence !== "none" && entry.item.effort <= 45) ||
     (entry.item.pinned && !entry.isCritical)
   );
+}
+
+export function clusterPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry => {
+    const nearby = plan.filter(other =>
+      other.item.id !== entry.item.id &&
+      Math.abs(daysBetween(entry.item.dueDate, other.item.dueDate)) <= 2
+    ).length;
+    return nearby >= 2 || entry.isCritical;
+  });
 }
 
 export function summarize(items: readonly LifeRecord[], today = localDay()): PlanSummary {
