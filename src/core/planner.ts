@@ -36,7 +36,6 @@ export function priorityFor(item: LifeRecord, today = localDay(), contextItems: 
   let isQuickWin = false;
   let isMilestone = false;
 
-  // Category-based inherent urgency weighting
   if (item.category === "Health") {
     score += 15;
     reasons.push("critical care category");
@@ -758,6 +757,15 @@ export function clusterPlan(items: readonly LifeRecord[], today = localDay(), qu
     ).length;
     return nearby >= 2 || entry.isCritical;
   });
+}
+
+export function manageableLoadPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const plan = buildPlan(items, today, query);
+  return plan.filter(entry =>
+    entry.item.effort <= 30 &&
+    entry.item.impact >= 2 &&
+    !entry.isCritical
+  );
 }
 
 export function summarize(items: readonly LifeRecord[], today = localDay()): PlanSummary {
