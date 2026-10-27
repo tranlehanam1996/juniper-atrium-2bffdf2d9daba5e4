@@ -55,6 +55,9 @@ function decodeRecord(value: unknown, index: number, theme: ThemeConfig): LifeRe
   if (raw.recurrence !== undefined && (typeof raw.recurrence !== "string" || !RECURRENCES.includes(raw.recurrence as RecurrenceType))) {
     throw new Error(`Record ${index + 1} has an invalid recurrence value.`);
   }
+  if (raw.pinned !== undefined && typeof raw.pinned !== "boolean") {
+    throw new Error(`Record ${index + 1} has an invalid pinned value.`);
+  }
 
   return {
     id: raw.id,
@@ -68,6 +71,7 @@ function decodeRecord(value: unknown, index: number, theme: ThemeConfig): LifeRe
     createdAt: raw.createdAt,
     updatedAt: raw.updatedAt,
     recurrence: raw.recurrence as RecurrenceType,
+    pinned: raw.pinned as boolean | undefined,
   };
 }
 

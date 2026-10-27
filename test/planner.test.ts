@@ -66,4 +66,18 @@ describe("JSON exchange boundary", () => {
     const record = valid();
     expect(() => importJson(JSON.stringify({ schema: 1, records: [record, record] }), theme)).toThrow(/duplicate id/);
   });
+
+  it("preserves a pinned care item when importing JSON", () => {
+    const record = { ...valid(), pinned: true };
+    expect(importJson(backup(record), theme)[0].pinned).toBe(true);
+  });
+
+  it("preserves an explicitly unpinned care item when importing JSON", () => {
+    const record = { ...valid(), pinned: false };
+    expect(importJson(backup(record), theme)[0].pinned).toBe(false);
+  });
+
+  it("rejects a non-boolean pinned value when importing JSON", () => {
+    expect(() => importJson(backup({ ...valid(), pinned: "yes" }), theme)).toThrow(/pinned/);
+  });
 });
