@@ -90,7 +90,7 @@ export function importJson(source: string, theme: ThemeConfig): LifeRecord[] {
 function csvCell(value: unknown): string { return `"${String(value ?? "").replaceAll("\"", "\"\"")}"`; }
 
 export function exportCsv(records: readonly LifeRecord[]): string {
-  const fields: (keyof LifeRecord)[] = ["id", "title", "category", "dueDate", "effort", "impact", "status", "notes"];
+  const fields: (keyof LifeRecord)[] = ["id", "title", "category", "dueDate", "effort", "impact", "status", "notes", "recurrence", "pinned"];
   return [fields.join(","), ...records.map((item) => fields.map((field) => csvCell(item[field])).join(","))].join("\n");
 }
 
