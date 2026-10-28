@@ -404,7 +404,7 @@ export function lowPressurePlan(items: readonly LifeRecord[], today = localDay()
   return plan.filter(entry => 
     (entry.item.effort <= 15 && entry.daysUntilDue <= 7) ||
     (entry.isQuickWin && entry.daysUntilDue <= 3) ||
-    (entry.item.recurrence !== "none" && entry.item.impact <= 2 && entry.item.effort <= 15) ||
+    (entry.item.recurrence && entry.item.recurrence !== "none" && entry.item.impact <= 2 && entry.item.effort <= 15) ||
     (entry.item.effort <= 5)
   );
 }
@@ -475,7 +475,7 @@ export function sustainPlan(items: readonly LifeRecord[], today = localDay(), qu
   return plan.filter(entry => 
     (entry.item.effort <= 45 && entry.item.impact >= 2) ||
     entry.isQuickWin ||
-    (entry.item.recurrence !== "none" && entry.item.effort <= 30)
+    (entry.item.recurrence && entry.item.recurrence !== "none" && entry.item.effort <= 30)
   );
 }
 
@@ -517,7 +517,7 @@ export function balancedEnergyPlan(items: readonly LifeRecord[], today = localDa
 export function routineBalancePlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
   const plan = buildPlan(items, today, query);
   return plan.filter(entry => 
-    (entry.item.recurrence !== "none" && entry.item.effort <= 45) ||
+    (entry.item.recurrence && entry.item.recurrence !== "none" && entry.item.effort <= 45) ||
     (entry.item.impact >= 4 && entry.item.effort <= 30) ||
     entry.isQuickWin
   );
@@ -536,7 +536,7 @@ export function gentleRhythmPlan(items: readonly LifeRecord[], today = localDay(
   const plan = buildPlan(items, today, query);
   return plan.filter(entry => 
     (!entry.isCritical && entry.item.effort <= 20) ||
-    (entry.item.recurrence !== "none" && entry.item.impact <= 3 && entry.item.effort <= 30) ||
+    (entry.item.recurrence && entry.item.recurrence !== "none" && entry.item.impact <= 3 && entry.item.effort <= 30) ||
     (entry.item.category === "Exercise" && entry.item.effort <= 30)
   );
 }
@@ -546,7 +546,7 @@ export function sustainablePacePlan(items: readonly LifeRecord[], today = localD
   return plan.filter(entry => 
     (!entry.isCritical && entry.item.effort <= 40 && entry.item.impact >= 3) ||
     (entry.isQuickWin && entry.item.effort <= 15) ||
-    (entry.item.recurrence !== "none" && entry.item.effort <= 30)
+    (entry.item.recurrence && entry.item.recurrence !== "none" && entry.item.effort <= 30)
   );
 }
 
@@ -655,7 +655,7 @@ export function balancedRecoveryPlan(items: readonly LifeRecord[], today = local
 export function deepMaintenancePlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
   const plan = buildPlan(items, today, query);
   return plan.filter(entry => 
-    (entry.item.recurrence !== "none" && entry.item.effort >= 45) ||
+    (entry.item.recurrence && entry.item.recurrence !== "none" && entry.item.effort >= 45) ||
     (entry.item.category === "Grooming" && entry.item.effort >= 45) ||
     (entry.item.impact <= 2 && entry.item.effort >= 60)
   );
@@ -665,7 +665,7 @@ export function batchingPlan(items: readonly LifeRecord[], today = localDay(), q
   const plan = buildPlan(items, today, query);
   return plan.filter(entry => 
     (entry.item.effort >= 30 && entry.item.impact >= 3) ||
-    (entry.item.recurrence !== "none" && entry.item.effort >= 15)
+    (entry.item.recurrence && entry.item.recurrence !== "none" && entry.item.effort >= 15)
   ).sort((a, b) => a.item.category.localeCompare(b.item.category) || b.score - a.score);
 }
 
@@ -708,7 +708,7 @@ export function lowWillpowerPlan(items: readonly LifeRecord[], today = localDay(
   return plan.filter(entry => 
     (entry.item.effort <= 10 && !entry.isCritical) ||
     entry.isQuickWin ||
-    (entry.item.recurrence !== "none" && entry.item.effort <= 15)
+    (entry.item.recurrence && entry.item.recurrence !== "none" && entry.item.effort <= 15)
   );
 }
 
@@ -743,7 +743,7 @@ export function steadyProgressPlan(items: readonly LifeRecord[], today = localDa
   const plan = buildPlan(items, today, query);
   return plan.filter(entry => 
     (entry.item.impact >= 3 && entry.item.effort >= 20 && entry.item.effort <= 60) ||
-    (entry.item.recurrence !== "none" && entry.item.effort <= 45) ||
+    (entry.item.recurrence && entry.item.recurrence !== "none" && entry.item.effort <= 45) ||
     (entry.item.pinned && !entry.isCritical)
   );
 }
