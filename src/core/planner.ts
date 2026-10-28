@@ -759,6 +759,10 @@ export function clusterPlan(items: readonly LifeRecord[], today = localDay(), qu
   });
 }
 
+export function deadlineClusterPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  return clusterPlan(items, today, query);
+}
+
 export function manageableLoadPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
   const plan = buildPlan(items, today, query);
   return plan.filter(entry =>
