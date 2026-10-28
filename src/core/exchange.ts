@@ -27,10 +27,14 @@ function decodeRecord(value: unknown, index: number, theme: ThemeConfig): LifeRe
     throw new Error(`Record ${index + 1} is not an object.`);
   }
   const raw = value as Record<string, unknown>;
-  if (typeof raw.id !== 'string' || raw.id.length < 1 || raw.id.length > 120) {
+  if (typeof raw.id !== 'string' || raw.id.trim().length < 1 || raw.id.length > 120) {
     throw new Error(`Record ${index + 1} has an invalid id.`);
   }
-  if (typeof raw.title !== 'string' || raw.title.trim().length < 1 || raw.title.length > 100) {
+  if (typeof raw.title !== 'string') {
+    throw new Error(`Record ${index + 1} has an invalid title.`);
+  }
+  const title = raw.title.trim();
+  if (title.length < 1 || title.length > 100) {
     throw new Error(`Record ${index + 1} has an invalid title.`);
   }
   if (typeof raw.category !== 'string' || !theme.categories.includes(raw.category)) {
@@ -61,7 +65,7 @@ function decodeRecord(value: unknown, index: number, theme: ThemeConfig): LifeRe
 
   return {
     id: raw.id,
-    title: raw.title.trim(),
+    title,
     category: raw.category,
     dueDate: raw.dueDate,
     effort: raw.effort,
