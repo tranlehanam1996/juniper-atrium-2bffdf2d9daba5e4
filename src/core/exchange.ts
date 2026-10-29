@@ -64,7 +64,7 @@ function decodeRecord(value: unknown, index: number, theme: ThemeConfig): LifeRe
   }
 
   return {
-    id: raw.id,
+    id: raw.id.trim(),
     title,
     category: raw.category,
     dueDate: raw.dueDate,
