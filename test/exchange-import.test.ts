@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { importJson } from '../src/core/exchange';
+import { importJson, exportCsv } from '../src/core/exchange';
 import { theme } from '../src/theme';
 import type { LifeRecord } from '../src/types';
 
@@ -25,5 +25,13 @@ describe('hardened JSON import', () => {
 
   it('rejects backup documents without a records array', () => {
     expect(() => importJson(JSON.stringify({ schema: 1 }), theme)).toThrow(/Unsupported backup format/);
+  });
+});
+
+describe('CSV export', () => {
+  it('includes recurrence and pinned values', () => {
+    const csv = exportCsv([item({ recurrence: 'weekly', pinned: true })]);
+    expect(csv).toContain('weekly');
+    expect(csv).toContain('true');
   });
 });
