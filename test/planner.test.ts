@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { importJson } from "../src/core/exchange";
-import { buildPlan, clusterPlan, daysBetween, priorityFor, suggestDailyLoad, summarize } from "../src/core/planner";
+import { buildPlan, clusterPlan, daysBetween, priorityFor, quickWinPlan, suggestDailyLoad, summarize } from "../src/core/planner";
 import { theme } from "../src/theme";
 import type { LifeRecord } from "../src/types";
 
@@ -36,6 +36,13 @@ describe("planning engine", () => {
     expect(result).toContain("a");
     expect(result).toContain("b");
     expect(result).not.toContain("far");
+  });
+  it("surfaces quick wins for high-impact low-effort items", () => {
+    const quick = item({ id: "quick", impact: 5, effort: 10 });
+    const heavy = item({ id: "heavy", impact: 2, effort: 120 });
+    const result = quickWinPlan([quick, heavy], "2026-08-19").map((entry) => entry.item.id);
+    expect(result).toContain("quick");
+    expect(result).not.toContain("heavy");
   });
 });
 
