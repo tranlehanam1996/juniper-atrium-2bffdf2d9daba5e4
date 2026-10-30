@@ -26,6 +26,11 @@ describe('hardened JSON import', () => {
   it('rejects backup documents without a records array', () => {
     expect(() => importJson(JSON.stringify({ schema: 1 }), theme)).toThrow(/Unsupported backup format/);
   });
+
+  it('trims id padding before applying the length limit', () => {
+    const paddedId = `${' '.repeat(10)}${'a'.repeat(115)}`;
+    expect(importJson(backup({ ...item(), id: paddedId }), theme)[0].id).toBe('a'.repeat(115));
+  });
 });
 
 describe('CSV export', () => {
