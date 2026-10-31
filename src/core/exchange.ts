@@ -113,7 +113,7 @@ function parseCsv(text: string): string[][] {
     } else if (char === '\r' || char === '\n') {
       if (char === '\r' && text[i + 1] === '\n') i += 1;
       current.push(field); field = '';
-      if (current.some(v => v !== '')) rows.push(current);
+      if (current.some(v => v.trim() !== '')) rows.push(current);
       current = [];
     } else {
       field += char;
@@ -121,7 +121,7 @@ function parseCsv(text: string): string[][] {
   }
   if (field.length > 0 || current.length > 0) {
     current.push(field);
-    if (current.some(v => v !== '')) rows.push(current);
+    if (current.some(v => v.trim() !== '')) rows.push(current);
   }
   return rows;
 }
