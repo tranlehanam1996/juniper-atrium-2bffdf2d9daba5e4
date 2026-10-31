@@ -80,7 +80,12 @@ function decodeRecord(value: unknown, index: number, theme: ThemeConfig): LifeRe
 }
 
 export function importJson(source: string, theme: ThemeConfig): LifeRecord[] {
-  const parsedUnknown = JSON.parse(source) as unknown;
+  let parsedUnknown: unknown;
+  try {
+    parsedUnknown = JSON.parse(source);
+  } catch {
+    throw new Error('Unsupported backup format.');
+  }
   if (!parsedUnknown || typeof parsedUnknown !== 'object' || Array.isArray(parsedUnknown)) {
     throw new Error('Unsupported backup format.');
   }
@@ -131,7 +136,8 @@ const CSV_FIELDS = ['id', 'title', 'category', 'dueDate', 'effort', 'impact', 's
 export function importCsv(source: string, theme: ThemeConfig): LifeRecord[] {
   const rows = parseCsv(source);
   if (rows.length === 0) throw new Error('Unsupported backup format: empty CSV.');
-  if (rows[0].length !== CSV_FIELDS.length || rows[0].some((cell, index) => cell.trim() !== CSV_FIELDS[index])) {
+  const header = rows[0].map((cell) => cell.replace(/^\uFEFF/, '').trim());
+  if (header.length !== CSV_FIELDS.length || header.some((cell, index) => cell !== CSV_FIELDS[index])) {
     throw new Error('Unsupported backup format: invalid CSV header.');
   }
   const ids = new Set<string>();
