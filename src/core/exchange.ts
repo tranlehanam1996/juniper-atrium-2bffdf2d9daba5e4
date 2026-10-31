@@ -131,7 +131,7 @@ const CSV_FIELDS = ['id', 'title', 'category', 'dueDate', 'effort', 'impact', 's
 export function importCsv(source: string, theme: ThemeConfig): LifeRecord[] {
   const rows = parseCsv(source);
   if (rows.length === 0) throw new Error('Unsupported backup format: empty CSV.');
-  if (rows[0].join(',') !== CSV_FIELDS.join(',')) {
+  if (rows[0].length !== CSV_FIELDS.length || rows[0].some((cell, index) => cell.trim() !== CSV_FIELDS[index])) {
     throw new Error('Unsupported backup format: invalid CSV header.');
   }
   const ids = new Set<string>();
