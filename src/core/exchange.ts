@@ -95,6 +95,101 @@ export function importJson(source: string, theme: ThemeConfig): LifeRecord[] {
   });
 }
 
+function parseCsv(text: string): string[][] {
+  const rows: string[][] = [];
+  let current: string[] = [];
+  let field = '';
+  let inQuotes = false;
+  for (let i = 0; i < text.length; i += 1) {
+    const char = text[i];
+    if (inQuotes) {
+      if (char === '"' && text[i + 1] === '"') { field += '"'; i += 1; }
+      else if (char === '"') inQuotes = false;
+      else field += char;
+    } else if (char === '"') {
+      inQuotes = true;
+    } else if (char === ',') {
+      current.push(field); field = '';
+    } else if (char === '\r' || char === '\n') {
+      if (char === '\r' && text[i + 1] === '\n') i += 1;
+      current.push(field); field = '';
+      if (current.some(v => v !== '')) rows.push(current);
+      current = [];
+    } else {
+      field += char;
+    }
+  }
+  if (field.length > 0 || current.length > 0) {
+    current.push(field);
+    if (current.some(v => v !== '')) rows.push(current);
+  }
+  return rows;
+}
+
+const CSV_FIELDS = ['id', 'title', 'category', 'dueDate', 'effort', 'impact', 'status', 'notes', 'recurrence', 'pinned'] as const;
+
+export function importCsv(source: string, theme: ThemeConfig): LifeRecord[] {
+  const rows = parseCsv(source);
+  if (rows.length === 0) throw new Error('Unsupported backup format: empty CSV.');
+  if (rows[0].join(',') !== CSV_FIELDS.join(',')) {
+    throw new Error('Unsupported backup format: invalid CSV header.');
+  }
+  const ids = new Set<string>();
+  const parsed: LifeRecord[] = [];
+  for (let i = 1; i < rows.length; i += 1) {
+    const row = rows[i];
+    if (row.length !== CSV_FIELDS.length) throw new Error(`Record ${i} has an invalid column count.`);
+    const raw = Object.fromEntries(CSV_FIELDS.map((field, index) => [field, row[index]]));
+    const id = (raw.id ?? '').trim();
+    const title = (raw.title ?? '').trim();
+    const category = (raw.category ?? '').trim();
+    const dueDate = (raw.dueDate ?? '').trim();
+    const effort = Number(raw.effort);
+    const impact = Number(raw.impact);
+    const status = (raw.status ?? '').trim() as ItemStatus;
+    const notes = raw.notes ?? '';
+    const createdAt = new Date().toISOString();
+    const updatedAt = createdAt;
+    if (id.length < 1 || id.length > 120) throw new Error(`Record ${i} has an invalid id.`);
+    if (title.length < 1 || title.length > 100) throw new Error(`Record ${i} has an invalid title.`);
+    if (!theme.categories.includes(category)) throw new Error(`Record ${i} has an unknown category.`);
+    if (!isCalendarDay(dueDate)) throw new Error(`Record ${i} has an invalid due date.`);
+    if (!Number.isFinite(effort) || effort < 1 || effort > 480) throw new Error(`Record ${i} has invalid effort.`);
+    if (!Number.isInteger(impact) || impact < 1 || impact > 5) throw new Error(`Record ${i} has invalid impact.`);
+    if (!STATUSES.includes(status)) throw new Error(`Record ${i} has an invalid status.`);
+    if (notes.length > 600) throw new Error(`Record ${i} has invalid notes.`);
+    let recurrence: RecurrenceType | undefined;
+    const recurrenceRaw = (raw.recurrence ?? '').trim();
+    if (recurrenceRaw !== '') {
+      if (!RECURRENCES.includes(recurrenceRaw as RecurrenceType)) throw new Error(`Record ${i} has an invalid recurrence value.`);
+      recurrence = recurrenceRaw as RecurrenceType;
+    }
+    let pinned: boolean | undefined;
+    const pinnedRaw = (raw.pinned ?? '').trim();
+    if (pinnedRaw !== '') {
+      if (pinnedRaw !== 'true' && pinnedRaw !== 'false') throw new Error(`Record ${i} has an invalid pinned value.`);
+      pinned = pinnedRaw === 'true';
+    }
+    if (ids.has(id)) throw new Error(`Record ${i} has a duplicate id.`);
+    ids.add(id);
+    parsed.push({
+      id,
+      title,
+      category,
+      dueDate,
+      effort,
+      impact,
+      status,
+      notes,
+      createdAt,
+      updatedAt,
+      recurrence,
+      pinned,
+    });
+  }
+  return parsed;
+}
+
 function csvCell(value: unknown): string {
   return '"' + String(value ?? '').replaceAll('"', '""') + '"';
 }
