@@ -80,9 +80,10 @@ function decodeRecord(value: unknown, index: number, theme: ThemeConfig): LifeRe
 }
 
 export function importJson(source: string, theme: ThemeConfig): LifeRecord[] {
+  const cleanedSource = source.replace(/^\uFEFF/, '');
   let parsedUnknown: unknown;
   try {
-    parsedUnknown = JSON.parse(source);
+    parsedUnknown = JSON.parse(cleanedSource);
   } catch {
     throw new Error('Unsupported backup format.');
   }
