@@ -37,12 +37,15 @@ export class RecordStore {
   }
 
   private read(fallback: LifeRecord[]): LifeRecord[] {
+    const raw = localStorage.getItem(this.key);
+    if (raw === null) return fallback;
     try {
-      const parsed = JSON.parse(localStorage.getItem(this.key) ?? "null") as StoreEnvelope | null;
+      const parsed = JSON.parse(raw) as StoreEnvelope | null;
       if (parsed?.version === 1 && Array.isArray(parsed.records)) return parsed.records;
     } catch {
-      localStorage.removeItem(this.key);
+      // Fall through to removal below.
     }
+    localStorage.removeItem(this.key);
     return fallback;
   }
 
