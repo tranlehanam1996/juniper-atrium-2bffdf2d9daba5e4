@@ -30,6 +30,9 @@ export function validateRecord(input: Partial<LifeRecord>, theme: ThemeConfig): 
   if (!Number.isInteger(input.impact) || Number(input.impact) < 1 || Number(input.impact) > 5) {
     errors.push(`${theme.impactLabel} must be an integer from 1 to 5.`);
   }
+  if (input.status && !["planned", "active", "done"].includes(input.status)) {
+    errors.push("Choose a valid status.");
+  }
   return errors;
 }
 
