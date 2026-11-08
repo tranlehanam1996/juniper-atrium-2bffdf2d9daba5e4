@@ -33,6 +33,12 @@ export function validateRecord(input: Partial<LifeRecord>, theme: ThemeConfig): 
   if (input.status && !["planned", "active", "done"].includes(input.status)) {
     errors.push("Choose a valid status.");
   }
+  if (input.recurrence && !["none", "daily", "weekly", "monthly"].includes(input.recurrence)) {
+    errors.push("Choose a valid recurrence.");
+  }
+  if (input.pinned !== undefined && typeof input.pinned !== "boolean") {
+    errors.push("Choose a valid pinned value.");
+  }
   return errors;
 }
 
