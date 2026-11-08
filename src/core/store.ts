@@ -41,7 +41,11 @@ export class RecordStore {
     if (raw === null) return fallback;
     try {
       const parsed = JSON.parse(raw) as StoreEnvelope | null;
-      if (parsed?.version === 1 && Array.isArray(parsed.records)) return parsed.records;
+      if (
+        parsed?.version === 1 &&
+        Array.isArray(parsed.records) &&
+        parsed.records.every((entry) => entry !== null && typeof entry === "object" && !Array.isArray(entry))
+      ) return parsed.records;
     } catch {
       // Fall through to removal below.
     }
