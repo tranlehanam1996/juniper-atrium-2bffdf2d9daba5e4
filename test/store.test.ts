@@ -53,6 +53,13 @@ describe("record store recovery", () => {
     expect(store.all()[0]?.id).toBe("one");
   });
 
+  it("trims record ids during recovery", () => {
+    const record = makeRecord({ id: "  one  " });
+    localStorage.setItem("key", JSON.stringify({ version: 1, records: [record], savedAt: "2026-08-01T00:00:00Z" }));
+    const store = new RecordStore("key", []);
+    expect(store.all()[0]?.id).toBe("one");
+  });
+
   it("rejects an envelope whose records contain a non-object entry", () => {
     localStorage.setItem("key", JSON.stringify({ version: 1, records: [null], savedAt: "2026-08-01T00:00:00Z" }));
     const store = new RecordStore("key", []);

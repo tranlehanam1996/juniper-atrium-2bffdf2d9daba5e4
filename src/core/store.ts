@@ -76,7 +76,7 @@ export class RecordStore {
   private records: LifeRecord[];
 
   constructor(private readonly key: string, initial: LifeRecord[]) {
-    this.records = this.read(initial.map((record) => ({ ...record })));
+    this.records = this.read(initial.map((record) => ({ ...record, id: record.id.trim() })));
   }
 
   all(): readonly LifeRecord[] { return this.records.map((item) => ({ ...item })); }
@@ -88,38 +88,39 @@ export class RecordStore {
   }
 
   upsert(record: LifeRecord): void {
-    const at = this.records.findIndex((item) => item.id === record.id);
-    if (at >= 0) this.records[at] = { ...record };
-    else this.records.push({ ...record });
+    const normalized = { ...record, id: record.id.trim() };
+    const at = this.records.findIndex((item) => item.id === normalized.id);
+    if (at >= 0) this.records[at] = normalized;
+    else this.records.push(normalized);
     this.commit();
   }
 
   remove(id: string): void {
-    this.records = this.records.filter((item) => item.id !== id);
+    this.records = this.records.filter((item) => item.id !== id.trim());
     this.commit();
   }
 
   replace(records: LifeRecord[]): void {
-    this.records = records.map((item) => ({ ...item }));
+    this.records = records.map((item) => ({ ...item, id: item.id.trim() }));
     this.commit();
   }
 
   private read(fallback: LifeRecord[]): LifeRecord[] {
     const raw = localStorage.getItem(this.key);
-    if (raw === null) return fallback.map((record) => ({ ...record }));
+    if (raw === null) return fallback.map((record) => ({ ...record, id: record.id.trim() }));
     try {
       const parsed = JSON.parse(raw) as unknown;
       if (isStoreEnvelope(parsed)) {
-        const ids = parsed.records.map((record) => record.id);
-        if (new Set(ids).size === ids.length) {
-          return parsed.records.map((record) => ({ ...record }));
+        const trimmedIds = parsed.records.map((record) => record.id.trim());
+        if (new Set(trimmedIds).size === trimmedIds.length && trimmedIds.every((id) => id !== "")) {
+          return parsed.records.map((record, index) => ({ ...record, id: trimmedIds[index] }));
         }
       }
     } catch {
       // Fall through to removal below.
     }
     localStorage.removeItem(this.key);
-    return fallback.map((record) => ({ ...record }));
+    return fallback.map((record) => ({ ...record, id: record.id.trim() }));
   }
 
   private commit(): void {
