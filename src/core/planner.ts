@@ -19,24 +19,25 @@ function isCalendarDay(value: string): boolean {
   return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
 }
 
-export function validateRecord(input: Partial<LifeRecord>, theme: ThemeConfig): string[] {
+export function validateRecord(input: Partial<LifeRecord> | null | undefined, theme: ThemeConfig): string[] {
+  const record = input ?? {};
   const errors: string[] = [];
-  if (!input.title?.trim()) errors.push(`${theme.itemLabel} needs a title.`);
-  if (!input.category || !theme.categories.includes(input.category)) errors.push("Choose a valid category.");
-  if (!input.dueDate || !/^\d{4}-\d{2}-\d{2}$/.test(input.dueDate) || !isCalendarDay(input.dueDate)) errors.push("Choose a valid date.");
-  if (!Number.isFinite(input.effort) || Number(input.effort) < 1 || Number(input.effort) > 480) {
+  if (!record.title?.trim()) errors.push(`${theme.itemLabel} needs a title.`);
+  if (!record.category || !theme.categories.includes(record.category)) errors.push("Choose a valid category.");
+  if (!record.dueDate || !/^\d{4}-\d{2}-\d{2}$/.test(record.dueDate) || !isCalendarDay(record.dueDate)) errors.push("Choose a valid date.");
+  if (!Number.isFinite(record.effort) || Number(record.effort) < 1 || Number(record.effort) > 480) {
     errors.push(`${theme.effortLabel} must be between 1 and 480.`);
   }
-  if (!Number.isInteger(input.impact) || Number(input.impact) < 1 || Number(input.impact) > 5) {
+  if (!Number.isInteger(record.impact) || Number(record.impact) < 1 || Number(record.impact) > 5) {
     errors.push(`${theme.impactLabel} must be an integer from 1 to 5.`);
   }
-  if (input.status && !["planned", "active", "done"].includes(input.status)) {
+  if (record.status && !["planned", "active", "done"].includes(record.status)) {
     errors.push("Choose a valid status.");
   }
-  if (input.recurrence && !["none", "daily", "weekly", "monthly"].includes(input.recurrence)) {
+  if (record.recurrence && !["none", "daily", "weekly", "monthly"].includes(record.recurrence)) {
     errors.push("Choose a valid recurrence.");
   }
-  if (input.pinned !== undefined && typeof input.pinned !== "boolean") {
+  if (record.pinned !== undefined && typeof record.pinned !== "boolean") {
     errors.push("Choose a valid pinned value.");
   }
   return errors;
@@ -218,13 +219,14 @@ export function priorityFor(item: LifeRecord, today = localDay(), contextItems: 
 }
 
 export function buildPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
+  const source = Array.isArray(items) ? items : [];
   const filtered = query
-    ? items.filter(i => 
+    ? source.filter(i => 
         i.title.toLowerCase().includes(query.toLowerCase()) ||
         i.notes.toLowerCase().includes(query.toLowerCase()) ||
         i.category.toLowerCase().includes(query.toLowerCase())
       )
-    : items;
+    : source;
 
   return filtered
     .map((item) => priorityFor(item, today, filtered))
@@ -787,7 +789,8 @@ export function manageableLoadPlan(items: readonly LifeRecord[], today = localDa
 }
 
 export function summarize(items: readonly LifeRecord[], today = localDay()): PlanSummary {
-  return items.reduce<PlanSummary>((summary, item) => {
+  const source = Array.isArray(items) ? items : [];
+  return source.reduce<PlanSummary>((summary, item) => {
     summary.total += 1;
     summary.effort += item.status === "done" ? 0 : item.effort;
     summary.completed += item.status === "done" ? 1 : 0;
@@ -800,7 +803,7 @@ export function summarize(items: readonly LifeRecord[], today = localDay()): Pla
 }
 
 export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: number, today = localDay()) {
-  const capacity = Math.max(1, minutesPerDay);
+  const capacity = Math.max(1, Number.isFinite(minutesPerDay) ? minutesPerDay : 1);
   const softCapacity = capacity * 0.8;
   const days = Array.from({ length: 7 }, (_, offset) => ({
     date: new Date(Date.parse(`${today}T00:00:00Z`) + offset * DAY_MS).toISOString().slice(0, 10),
@@ -808,7 +811,7 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
     entries: [] as PlanEntry[],
   }));
 
-  const planned = buildPlan(items, today);
+  const planned = buildPlan(Array.isArray(items) ? items : [], today);
   
   const sortedForLoad = [...planned].sort((a, b) => {
     if (a.isCritical !== b.isCritical) return a.isCritical ? -1 : 1;
