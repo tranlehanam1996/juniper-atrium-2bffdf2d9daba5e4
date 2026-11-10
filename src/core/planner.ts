@@ -3,7 +3,8 @@ import type { LifeRecord, PlanEntry, PlanSummary, ThemeConfig } from "../types";
 const DAY_MS = 86_400_000;
 
 export function localDay(date = new Date()): string {
-  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+  const time = date instanceof Date && Number.isFinite(date.getTime()) ? date.getTime() : Date.now();
+  const local = new Date(time - new Date(time).getTimezoneOffset() * 60_000);
   return local.toISOString().slice(0, 10);
 }
 
@@ -20,30 +21,59 @@ function isCalendarDay(value: string): boolean {
 }
 
 export function validateRecord(input: Partial<LifeRecord> | null | undefined, theme: ThemeConfig): string[] {
-  const record = input ?? {};
+  const record =
+    input && typeof input === "object" && !Array.isArray(input)
+      ? (input as Partial<LifeRecord>)
+      : {};
   const errors: string[] = [];
-  if (!record.title?.trim()) errors.push(`${theme.itemLabel} needs a title.`);
-  if (!record.category || !theme.categories.includes(record.category)) errors.push("Choose a valid category.");
-  if (!record.dueDate || !/^\d{4}-\d{2}-\d{2}$/.test(record.dueDate) || !isCalendarDay(record.dueDate)) errors.push("Choose a valid date.");
-  if (!Number.isFinite(record.effort) || Number(record.effort) < 1 || Number(record.effort) > 480) {
+  if (typeof record.title !== "string" || !record.title.trim()) errors.push(`${theme.itemLabel} needs a title.`);
+  if (typeof record.category !== "string" || !theme.categories.includes(record.category)) errors.push("Choose a valid category.");
+  if (
+    typeof record.dueDate !== "string" ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(record.dueDate) ||
+    !isCalendarDay(record.dueDate)
+  ) {
+    errors.push("Choose a valid date.");
+  }
+  if (
+    typeof record.effort !== "number" ||
+    !Number.isFinite(record.effort) ||
+    Number(record.effort) < 1 ||
+    Number(record.effort) > 480
+  ) {
     errors.push(`${theme.effortLabel} must be between 1 and 480.`);
   }
-  if (!Number.isInteger(record.impact) || Number(record.impact) < 1 || Number(record.impact) > 5) {
+  if (
+    typeof record.impact !== "number" ||
+    !Number.isInteger(record.impact) ||
+    Number(record.impact) < 1 ||
+    Number(record.impact) > 5
+  ) {
     errors.push(`${theme.impactLabel} must be an integer from 1 to 5.`);
   }
-  if (record.status && !["planned", "active", "done"].includes(record.status)) {
+  if (
+    record.status !== undefined &&
+    (typeof record.status !== "string" || !["planned", "active", "done"].includes(record.status))
+  ) {
     errors.push("Choose a valid status.");
   }
-  if (record.recurrence && !["none", "daily", "weekly", "monthly"].includes(record.recurrence)) {
+  if (
+    record.recurrence !== undefined &&
+    (typeof record.recurrence !== "string" || !["none", "daily", "weekly", "monthly"].includes(record.recurrence))
+  ) {
     errors.push("Choose a valid recurrence.");
   }
   if (record.pinned !== undefined && typeof record.pinned !== "boolean") {
     errors.push("Choose a valid pinned value.");
   }
+  if (record.notes !== undefined && typeof record.notes !== "string") {
+    errors.push("Notes must be text.");
+  }
   return errors;
 }
 
 export function priorityFor(item: LifeRecord, today = localDay(), contextItems: readonly LifeRecord[] = []): PlanEntry {
+  const safeContext = Array.isArray(contextItems) ? contextItems : [];
   const daysUntilDue = daysBetween(today, item.dueDate);
   const reasons: string[] = [];
   let score = item.impact * 12;
@@ -149,7 +179,7 @@ export function priorityFor(item: LifeRecord, today = localDay(), contextItems: 
   }
 
   if (item.effort > 60) {
-    const batchCount = contextItems.filter(i => 
+    const batchCount = safeContext.filter(i => 
       i.id !== item.id && 
       i.status !== "done" &&
       i.category === item.category && 
@@ -162,7 +192,7 @@ export function priorityFor(item: LifeRecord, today = localDay(), contextItems: 
     }
   }
 
-  const nearbyDueCount = contextItems.filter(i =>
+  const nearbyDueCount = safeContext.filter(i =>
     i.id !== item.id &&
     i.status !== "done" &&
     Math.abs(daysBetween(item.dueDate, i.dueDate)) <= 2
@@ -219,13 +249,22 @@ export function priorityFor(item: LifeRecord, today = localDay(), contextItems: 
 }
 
 export function buildPlan(items: readonly LifeRecord[], today = localDay(), query = ""): PlanEntry[] {
-  const source = Array.isArray(items) ? items : [];
-  const filtered = query
-    ? source.filter(i => 
-        i.title.toLowerCase().includes(query.toLowerCase()) ||
-        i.notes.toLowerCase().includes(query.toLowerCase()) ||
-        i.category.toLowerCase().includes(query.toLowerCase())
-      )
+  const source = Array.isArray(items)
+    ? items.filter((item): item is LifeRecord => !!item && typeof item === "object" && !Array.isArray(item))
+    : [];
+  const normalizedQuery = typeof query === "string" ? query : "";
+  const filtered = normalizedQuery
+    ? source.filter(item => {
+        const title = typeof item.title === "string" ? item.title : "";
+        const notes = typeof item.notes === "string" ? item.notes : "";
+        const category = typeof item.category === "string" ? item.category : "";
+        const needle = normalizedQuery.toLowerCase();
+        return (
+          title.toLowerCase().includes(needle) ||
+          notes.toLowerCase().includes(needle) ||
+          category.toLowerCase().includes(needle)
+        );
+      })
     : source;
 
   return filtered
@@ -789,29 +828,37 @@ export function manageableLoadPlan(items: readonly LifeRecord[], today = localDa
 }
 
 export function summarize(items: readonly LifeRecord[], today = localDay()): PlanSummary {
-  const source = Array.isArray(items) ? items : [];
+  const source = Array.isArray(items)
+    ? items.filter((item): item is LifeRecord => !!item && typeof item === "object" && !Array.isArray(item))
+    : [];
   return source.reduce<PlanSummary>((summary, item) => {
     summary.total += 1;
-    summary.effort += item.status === "done" ? 0 : item.effort;
-    summary.completed += item.status === "done" ? 1 : 0;
-    const days = daysBetween(today, item.dueDate);
-    summary.overdue += item.status !== "done" && days < 0 ? 1 : 0;
-    summary.dueSoon += item.status !== "done" && days >= 0 && days <= 7 ? 1 : 0;
-    summary.byCategory[item.category] = (summary.byCategory[item.category] ?? 0) + 1;
+    const status = item.status;
+    const effort = typeof item.effort === "number" && Number.isFinite(item.effort) ? item.effort : 0;
+    summary.effort += status === "done" ? 0 : effort;
+    summary.completed += status === "done" ? 1 : 0;
+    const days = daysBetween(today, typeof item.dueDate === "string" ? item.dueDate : "");
+    summary.overdue += status !== "done" && days < 0 ? 1 : 0;
+    summary.dueSoon += status !== "done" && days >= 0 && days <= 7 ? 1 : 0;
+    const category = typeof item.category === "string" && item.category ? item.category : "Unknown";
+    summary.byCategory[category] = (summary.byCategory[category] ?? 0) + 1;
     return summary;
   }, { total: 0, completed: 0, overdue: 0, dueSoon: 0, effort: 0, byCategory: {} });
 }
 
 export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: number, today = localDay()) {
-  const capacity = Math.max(1, Number.isFinite(minutesPerDay) ? minutesPerDay : 1);
+  const capacity = Math.max(1, Number.isFinite(minutesPerDay) ? Number(minutesPerDay) : 1);
+  const safeToday = typeof today === "string" && /^\d{4}-\d{2}-\d{2}$/.test(today) ? today : localDay();
+  const parsedToday = Date.parse(`${safeToday}T00:00:00Z`);
+  const startTime = Number.isFinite(parsedToday) ? parsedToday : Date.parse(`${localDay()}T00:00:00Z`);
   const softCapacity = capacity * 0.8;
   const days = Array.from({ length: 7 }, (_, offset) => ({
-    date: new Date(Date.parse(`${today}T00:00:00Z`) + offset * DAY_MS).toISOString().slice(0, 10),
+    date: new Date(startTime + offset * DAY_MS).toISOString().slice(0, 10),
     used: 0,
     entries: [] as PlanEntry[],
   }));
 
-  const planned = buildPlan(Array.isArray(items) ? items : [], today);
+  const planned = buildPlan(Array.isArray(items) ? items : [], safeToday);
   
   const sortedForLoad = [...planned].sort((a, b) => {
     if (a.isCritical !== b.isCritical) return a.isCritical ? -1 : 1;
@@ -820,22 +867,23 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
   });
 
   for (const entry of sortedForLoad) {
+    const effort = typeof entry.item.effort === "number" && Number.isFinite(entry.item.effort) ? entry.item.effort : 0;
     const dueDayIndex = entry.daysUntilDue;
     
     if (dueDayIndex >= 0 && dueDayIndex < 7) {
       const dueDay = days[dueDayIndex];
-      if (dueDay.used + entry.item.effort <= softCapacity) {
+      if (dueDay.used + effort <= softCapacity) {
         dueDay.entries.push(entry);
-        dueDay.used += entry.item.effort;
+        dueDay.used += effort;
         continue;
       }
     }
 
     if (entry.isCritical || dueDayIndex < 0 || entry.item.impact >= 5) {
-      const earliest = days.find(day => day.used + entry.item.effort <= capacity);
+      const earliest = days.find(day => day.used + effort <= capacity);
       if (earliest) {
         earliest.entries.push(entry);
-        earliest.used += entry.item.effort;
+        earliest.used += effort;
         continue;
       }
     }
@@ -847,15 +895,15 @@ export function suggestDailyLoad(items: readonly LifeRecord[], minutesPerDay: nu
 
     const target = candidates
       .sort((a, b) => a.used - b.used)
-      .find(day => day.used + entry.item.effort <= capacity);
+      .find(day => day.used + effort <= capacity);
 
     if (target) {
       target.entries.push(entry);
-      target.used += entry.item.effort;
+      target.used += effort;
     } else {
       const absoluteLeast = days.reduce((prev, curr) => (curr.used < prev.used ? curr : prev));
       absoluteLeast.entries.push(entry);
-      absoluteLeast.used += entry.item.effort;
+      absoluteLeast.used += effort;
     }
   }
 
