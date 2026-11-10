@@ -3,6 +3,8 @@ import type { LifeRecord } from "../types";
 interface StoreEnvelope { version: 1; records: LifeRecord[]; savedAt: string }
 type Listener = (records: readonly LifeRecord[]) => void;
 
+const MAX_ID_LENGTH = 128;
+
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.trim() !== "";
 }
@@ -34,6 +36,7 @@ function isLifeRecord(value: unknown): value is LifeRecord {
   const record = value as Record<string, unknown>;
   return (
     isNonEmptyString(record.id) &&
+    record.id.trim().length <= MAX_ID_LENGTH &&
     isNonEmptyString(record.title) &&
     isNonEmptyString(record.category) &&
     typeof record.dueDate === "string" &&
@@ -77,10 +80,10 @@ export class RecordStore {
 
   constructor(private readonly key: string, initial: LifeRecord[]) {
     const safeInitial = Array.isArray(initial) ? initial : [];
-    this.records = this.read(safeInitial.map((record) => ({
-      ...record,
-      id: typeof record?.id === "string" ? record.id.trim() : record?.id,
-    })));
+    const normalizedInitial = safeInitial
+      .filter(isLifeRecord)
+      .map((record) => ({ ...record, id: record.id.trim() }));
+    this.records = this.read(normalizedInitial);
   }
 
   all(): readonly LifeRecord[] { return this.records.map((item) => ({ ...item })); }
@@ -94,6 +97,7 @@ export class RecordStore {
   upsert(record: LifeRecord): void {
     if (!record || typeof record !== "object" || Array.isArray(record)) return;
     const normalized = { ...record, id: typeof record.id === "string" ? record.id.trim() : record.id };
+    if (!isLifeRecord(normalized)) return;
     const at = this.records.findIndex((item) => item.id === normalized.id);
     if (at >= 0) this.records[at] = normalized;
     else this.records.push(normalized);
@@ -101,17 +105,18 @@ export class RecordStore {
   }
 
   remove(id: string): void {
-    const target = typeof id === "string" ? id.trim() : id;
+    if (typeof id !== "string") return;
+    const target = id.trim();
+    if (!target) return;
     this.records = this.records.filter((item) => item.id !== target);
     this.commit();
   }
 
   replace(records: LifeRecord[]): void {
     const safeRecords = Array.isArray(records) ? records : [];
-    this.records = safeRecords.map((item) => ({
-      ...item,
-      id: typeof item?.id === "string" ? item.id.trim() : item?.id,
-    }));
+    this.records = safeRecords
+      .filter(isLifeRecord)
+      .map((item) => ({ ...item, id: item.id.trim() }));
     this.commit();
   }
 
@@ -127,7 +132,10 @@ export class RecordStore {
       const parsed = JSON.parse(raw) as unknown;
       if (isStoreEnvelope(parsed)) {
         const trimmedIds = parsed.records.map((record) => record.id.trim());
-        if (new Set(trimmedIds).size === trimmedIds.length && trimmedIds.every((id) => id !== "")) {
+        if (
+          trimmedIds.every((id) => id !== "" && id.length <= MAX_ID_LENGTH) &&
+          new Set(trimmedIds).size === trimmedIds.length
+        ) {
           return parsed.records.map((record, index) => ({ ...record, id: trimmedIds[index] }));
         }
       }

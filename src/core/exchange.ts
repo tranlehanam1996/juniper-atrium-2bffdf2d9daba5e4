@@ -120,6 +120,9 @@ export function importJson(text: string, theme: ThemeConfig): LifeRecord[] {
     throw new Error("Unsupported backup format");
   }
   const document = parsed as Record<string, unknown>;
+  if (document.schema !== 1) {
+    throw new Error("Unsupported backup format");
+  }
   if (!Array.isArray(document.records)) {
     throw new Error("Unsupported backup format");
   }
@@ -200,9 +203,12 @@ function parseCsv(text: string): string[][] {
 }
 
 export function importCsv(text: string, theme: ThemeConfig): LifeRecord[] {
-  const rows = parseCsv(text);
+  const rows = parseCsv(text.replace(/^\uFEFF/, ""));
   if (rows.length === 0) return [];
   const header = rows[0].map((value) => value.trim());
+  if (new Set(header).size !== header.length) {
+    throw new Error("duplicate column");
+  }
   const records: LifeRecord[] = [];
   const ids = new Set<string>();
   for (let rowIndex = 1; rowIndex < rows.length; rowIndex += 1) {
@@ -217,12 +223,12 @@ export function importCsv(text: string, theme: ThemeConfig): LifeRecord[] {
     let pinned: boolean | undefined;
     if (pinnedRaw === "" || pinnedRaw === undefined) {
       pinned = undefined;
-    } else if (pinnedRaw === "true") {
+    } else if (pinnedRaw === "true" || pinnedRaw === "1") {
       pinned = true;
-    } else if (pinnedRaw === "false") {
+    } else if (pinnedRaw === "false" || pinnedRaw === "0") {
       pinned = false;
     } else {
-      pinned = pinnedRaw === "1";
+      throw new Error("pinned must be a boolean.");
     }
     const partial: Partial<LifeRecord> = {
       id: values.id,
