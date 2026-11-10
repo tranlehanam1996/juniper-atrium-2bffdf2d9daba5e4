@@ -186,6 +186,14 @@ function parseCsv(text: string): string[][] {
       continue;
     }
     if (char === "\r") {
+      if (text[i + 1] === "\n") {
+        i += 1;
+        continue;
+      }
+      row.push(field);
+      rows.push(row);
+      row = [];
+      field = "";
       i += 1;
       continue;
     }
