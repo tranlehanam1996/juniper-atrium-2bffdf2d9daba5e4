@@ -238,6 +238,7 @@ export function importCsv(text: string, theme: ThemeConfig): LifeRecord[] {
     } else {
       throw new Error("pinned must be a boolean.");
     }
+    const recurrenceRaw = values.recurrence;
     const partial: Partial<LifeRecord> = {
       id: values.id,
       title: values.title,
@@ -247,7 +248,7 @@ export function importCsv(text: string, theme: ThemeConfig): LifeRecord[] {
       impact: Number(values.impact),
       status: values.status as ItemStatus,
       notes: values.notes,
-      recurrence: (values.recurrence || "none") as RecurrenceType,
+      recurrence: (recurrenceRaw === undefined || recurrenceRaw === "" ? "none" : recurrenceRaw) as RecurrenceType,
       pinned,
       createdAt: now,
       updatedAt: now,

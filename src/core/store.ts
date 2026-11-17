@@ -82,7 +82,8 @@ export class RecordStore {
     const safeInitial = Array.isArray(initial) ? initial : [];
     const normalizedInitial = safeInitial
       .filter(isLifeRecord)
-      .map((record) => ({ ...record, id: record.id.trim() }));
+      .map((record) => ({ ...record, id: record.id.trim() }))
+      .filter((record, index, records) => records.findIndex((candidate) => candidate.id === record.id) === index);
     this.records = this.read(normalizedInitial);
   }
 
@@ -99,8 +100,12 @@ export class RecordStore {
     const normalized = { ...record, id: typeof record.id === "string" ? record.id.trim() : record.id };
     if (!isLifeRecord(normalized)) return;
     const at = this.records.findIndex((item) => item.id === normalized.id);
-    if (at >= 0) this.records[at] = normalized;
-    else this.records.push(normalized);
+    if (at >= 0) {
+      this.records[at] = normalized;
+      this.records = this.records.filter((item, index) => item.id !== normalized.id || index === at);
+    } else {
+      this.records.push(normalized);
+    }
     this.commit();
   }
 
@@ -114,19 +119,39 @@ export class RecordStore {
 
   replace(records: LifeRecord[]): void {
     const safeRecords = Array.isArray(records) ? records : [];
-    this.records = safeRecords
+    const normalized = safeRecords
       .filter(isLifeRecord)
       .map((item) => ({ ...item, id: item.id.trim() }));
+    this.records = normalized.filter((record, index, records) =>
+      records.findIndex((candidate) => candidate.id === record.id) === index
+    );
     this.commit();
   }
 
   private read(fallback: LifeRecord[]): LifeRecord[] {
     const safeFallback = Array.isArray(fallback) ? fallback : [];
-    const normalizedFallback = safeFallback.map((record) => ({
-      ...record,
-      id: typeof record?.id === "string" ? record.id.trim() : record?.id,
-    }));
-    const raw = localStorage.getItem(this.key);
+    const normalizedFallback = safeFallback
+      .map((record) => ({
+        ...record,
+        id: typeof record?.id === "string" ? record.id.trim() : record?.id,
+      }))
+      .filter((record, index, records) => {
+        const id = typeof record?.id === "string" ? record.id.trim() : null;
+        if (id === null || id === "") return true;
+        return (
+          records.findIndex((candidate) => {
+            const candidateId = typeof candidate?.id === "string" ? candidate.id.trim() : null;
+            return candidateId === id;
+          }) === index
+        );
+      });
+
+    let raw: string | null;
+    try {
+      raw = localStorage.getItem(this.key);
+    } catch {
+      return normalizedFallback;
+    }
     if (raw === null) return normalizedFallback;
     try {
       const parsed = JSON.parse(raw) as unknown;
@@ -142,13 +167,21 @@ export class RecordStore {
     } catch {
       // Fall through to removal below.
     }
-    localStorage.removeItem(this.key);
+    try {
+      localStorage.removeItem(this.key);
+    } catch {
+      // Ignore storage cleanup failures.
+    }
     return normalizedFallback;
   }
 
   private commit(): void {
     const envelope: StoreEnvelope = { version: 1, records: this.records, savedAt: new Date().toISOString() };
-    localStorage.setItem(this.key, JSON.stringify(envelope));
+    try {
+      localStorage.setItem(this.key, JSON.stringify(envelope));
+    } catch {
+      // Keep in-memory state usable even when persistence is unavailable.
+    }
     for (const listener of this.listeners) listener(this.all());
   }
 }
