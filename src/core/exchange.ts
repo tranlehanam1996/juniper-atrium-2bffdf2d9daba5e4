@@ -112,7 +112,7 @@ function validateRecord(input: Partial<LifeRecord>, theme: ThemeConfig): LifeRec
 export function importJson(text: string, theme: ThemeConfig): LifeRecord[] {
   let parsed: unknown;
   try {
-    parsed = JSON.parse(text);
+    parsed = JSON.parse(text.replace(/^\uFEFF/, ""));
   } catch {
     throw new Error("Unsupported backup format");
   }
@@ -221,7 +221,7 @@ export function importCsv(text: string, theme: ThemeConfig): LifeRecord[] {
   const ids = new Set<string>();
   for (let rowIndex = 1; rowIndex < rows.length; rowIndex += 1) {
     const row = rows[rowIndex];
-    if (row.length === 1 && row[0].trim() === "") continue;
+    if (row.every((cell) => cell.trim() === "")) continue;
     const values: Record<string, string> = {};
     header.forEach((name, index) => {
       values[name] = (row[index] ?? "").trim();

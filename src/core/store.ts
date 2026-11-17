@@ -154,7 +154,7 @@ export class RecordStore {
     }
     if (raw === null) return normalizedFallback;
     try {
-      const parsed = JSON.parse(raw) as unknown;
+      const parsed = JSON.parse(raw.replace(/^\uFEFF/, "")) as unknown;
       if (isStoreEnvelope(parsed)) {
         const trimmedIds = parsed.records.map((record) => record.id.trim());
         if (
