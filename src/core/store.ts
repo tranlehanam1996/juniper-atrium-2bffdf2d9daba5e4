@@ -118,7 +118,8 @@ export class RecordStore {
   }
 
   replace(records: LifeRecord[]): void {
-    const safeRecords = Array.isArray(records) ? records : [];
+    if (!Array.isArray(records)) return;
+    const safeRecords = records;
     const normalized = safeRecords
       .filter(isLifeRecord)
       .map((item) => ({ ...item, id: item.id.trim() }));
@@ -131,6 +132,7 @@ export class RecordStore {
   private read(fallback: LifeRecord[]): LifeRecord[] {
     const safeFallback = Array.isArray(fallback) ? fallback : [];
     const normalizedFallback = safeFallback
+      .filter(isLifeRecord)
       .map((record) => ({
         ...record,
         id: typeof record?.id === "string" ? record.id.trim() : record?.id,
