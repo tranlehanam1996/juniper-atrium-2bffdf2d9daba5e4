@@ -143,7 +143,7 @@ export class RecordStore {
       }))
       .filter((record, index, records) => {
         const id = typeof record?.id === "string" ? record.id.trim() : null;
-        if (id === null || id === "") return true;
+        if (id === null || id === "") return false;
         return (
           records.findIndex((candidate) => {
             const candidateId = typeof candidate?.id === "string" ? candidate.id.trim() : null;

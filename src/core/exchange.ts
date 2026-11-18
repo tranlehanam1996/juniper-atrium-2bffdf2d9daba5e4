@@ -211,6 +211,12 @@ function parseCsv(text: string): string[][] {
   return rows;
 }
 
+function parseCsvNumber(value: string): number {
+  const trimmed = value.trim();
+  if (!/^-?\d+(?:\.\d+)?$/.test(trimmed)) return Number.NaN;
+  return Number(trimmed);
+}
+
 export function importCsv(text: string, theme: ThemeConfig): LifeRecord[] {
   const rows = parseCsv(text);
   if (rows.length === 0) return [];
@@ -228,7 +234,7 @@ export function importCsv(text: string, theme: ThemeConfig): LifeRecord[] {
       values[name] = (row[index] ?? "").trim();
     });
     const now = new Date().toISOString();
-    const pinnedRaw = values.pinned;
+    const pinnedRaw = values.pinned ?? "";
     let pinned: boolean | undefined;
     if (pinnedRaw === "" || pinnedRaw === undefined) {
       pinned = undefined;
@@ -239,17 +245,17 @@ export function importCsv(text: string, theme: ThemeConfig): LifeRecord[] {
     } else {
       throw new Error("pinned must be a boolean.");
     }
-    const recurrenceRaw = values.recurrence;
+    const recurrenceRaw = values.recurrence ?? "";
     const partial: Partial<LifeRecord> = {
-      id: values.id,
-      title: values.title,
-      category: values.category,
-      dueDate: values.dueDate,
-      effort: Number(values.effort),
-      impact: Number(values.impact),
-      status: values.status as ItemStatus,
-      notes: values.notes,
-      recurrence: (recurrenceRaw === undefined || recurrenceRaw === "" ? "none" : recurrenceRaw) as RecurrenceType,
+      id: values.id ?? "",
+      title: values.title ?? "",
+      category: values.category ?? "",
+      dueDate: values.dueDate ?? "",
+      effort: parseCsvNumber(values.effort ?? ""),
+      impact: parseCsvNumber(values.impact ?? ""),
+      status: (values.status ?? "") as ItemStatus,
+      notes: values.notes ?? "",
+      recurrence: (recurrenceRaw === "" ? "none" : recurrenceRaw) as RecurrenceType,
       pinned,
       createdAt: now,
       updatedAt: now,
