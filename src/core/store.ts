@@ -91,7 +91,11 @@ export class RecordStore {
 
   subscribe(listener: Listener): () => void {
     this.listeners.add(listener);
-    listener(this.all());
+    try {
+      listener(this.all());
+    } catch {
+      // Keep subscriptions usable even if a listener throws.
+    }
     return () => this.listeners.delete(listener);
   }
 
@@ -156,7 +160,7 @@ export class RecordStore {
     }
     if (raw === null) return normalizedFallback;
     try {
-      const parsed = JSON.parse(raw.replace(/^\uFEFF/, "")) as unknown;
+      const parsed = JSON.parse(raw.replace(/^\uFEFF+/, "")) as unknown;
       if (isStoreEnvelope(parsed)) {
         const trimmedIds = parsed.records.map((record) => record.id.trim());
         if (
@@ -184,6 +188,12 @@ export class RecordStore {
     } catch {
       // Keep in-memory state usable even when persistence is unavailable.
     }
-    for (const listener of this.listeners) listener(this.all());
+    for (const listener of this.listeners) {
+      try {
+        listener(this.all());
+      } catch {
+        // Ignore listener failures so persistence notifications continue.
+      }
+    }
   }
 }
