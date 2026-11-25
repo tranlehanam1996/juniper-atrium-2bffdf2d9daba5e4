@@ -149,6 +149,7 @@ function parseCsv(text: string): string[][] {
   let row: string[] = [];
   let field = "";
   let inQuotes = false;
+  let quoted = false;
   let i = 0;
   while (i < text.length) {
     const char = text[i];
@@ -169,12 +170,14 @@ function parseCsv(text: string): string[][] {
     }
     if (char === '"') {
       inQuotes = true;
+      quoted = true;
       i += 1;
       continue;
     }
     if (char === ",") {
       row.push(field);
       field = "";
+      quoted = false;
       i += 1;
       continue;
     }
@@ -183,6 +186,7 @@ function parseCsv(text: string): string[][] {
       rows.push(row);
       row = [];
       field = "";
+      quoted = false;
       i += 1;
       continue;
     }
@@ -195,6 +199,7 @@ function parseCsv(text: string): string[][] {
       rows.push(row);
       row = [];
       field = "";
+      quoted = false;
       i += 1;
       continue;
     }
@@ -204,7 +209,7 @@ function parseCsv(text: string): string[][] {
   if (inQuotes) {
     throw new Error("unclosed quote");
   }
-  if (field !== "" || row.length > 0) {
+  if (quoted || field !== "" || row.length > 0) {
     row.push(field);
     rows.push(row);
   }
