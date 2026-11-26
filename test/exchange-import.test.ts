@@ -61,4 +61,11 @@ describe('CSV import', () => {
     const records = importCsv(csv, theme);
     expect(records).toHaveLength(1);
   });
+
+  it('preserves a final quoted empty field', () => {
+    const csv = 'id,title,category,dueDate,effort,impact,status,notes,recurrence,pinned\none,Example,Health,2026-08-20,30,3,planned,,none,""';
+    const records = importCsv(csv, theme);
+    expect(records).toHaveLength(1);
+    expect(records[0].pinned).toBeUndefined();
+  });
 });

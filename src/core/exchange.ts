@@ -2,10 +2,6 @@ import type { LifeRecord, ItemStatus, RecurrenceType, ThemeConfig } from "../typ
 
 const MAX_ID_LENGTH = 128;
 
-function isNonEmptyString(value: unknown): value is string {
-  return typeof value === "string" && value.trim() !== "";
-}
-
 function isCalendarDay(value: string): boolean {
   const parsed = new Date(`${value}T00:00:00Z`);
   return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
@@ -317,5 +313,5 @@ export function download(content: string, filename: string, mimeType = "text/pla
   document.body.appendChild(anchor);
   anchor.click();
   document.body.removeChild(anchor);
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(url), 0);
 }

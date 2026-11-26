@@ -78,7 +78,7 @@ export class RecordStore {
   private readonly listeners = new Set<Listener>();
   private records: LifeRecord[];
 
-  constructor(private readonly key: string, initial: LifeRecord[]) {
+  constructor(private readonly key: string, initial: readonly LifeRecord[] = []) {
     const safeInitial = Array.isArray(initial) ? initial : [];
     const normalizedInitial = safeInitial
       .filter(isLifeRecord)
@@ -121,7 +121,7 @@ export class RecordStore {
     this.commit();
   }
 
-  replace(records: LifeRecord[]): void {
+  replace(records: readonly LifeRecord[]): void {
     if (!Array.isArray(records)) return;
     const safeRecords = records;
     const normalized = safeRecords

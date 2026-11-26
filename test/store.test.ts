@@ -81,4 +81,11 @@ describe("record store recovery", () => {
     expect(store.all()).toHaveLength(0);
     expect(localStorage.getItem("key")).toBeNull();
   });
+
+  it("replaces records and deduplicates trimmed ids", () => {
+    const store = new RecordStore("key", []);
+    store.replace([makeRecord({ id: "a" }), makeRecord({ id: "a " })]);
+    expect(store.all()).toHaveLength(1);
+    expect(store.all()[0]?.id).toBe("a");
+  });
 });
