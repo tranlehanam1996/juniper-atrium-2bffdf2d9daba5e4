@@ -28,39 +28,43 @@ function validateRecord(input: Partial<LifeRecord>, theme: ThemeConfig): LifeRec
   if (!input || typeof input !== "object" || Array.isArray(input)) {
     throw new Error("Unsupported backup format");
   }
-  const record = input as Partial<LifeRecord>;
+  const source = input as Record<string, unknown>;
+  const record = Object.create(null) as Record<string, unknown>;
+  for (const key of Object.keys(source)) {
+    record[key] = source[key];
+  }
 
   if (typeof record.id !== "string") throw new Error("id must be a string");
-  const id = record.id.trim();
+  const id = (record.id as string).trim();
   if (!id) throw new Error("id must not be empty");
   if (id.length > MAX_ID_LENGTH) throw new Error("id is too long");
 
-  if (typeof record.title !== "string" || !record.title.trim()) {
+  if (typeof record.title !== "string" || !(record.title as string).trim()) {
     throw new Error(`${theme.itemLabel} needs a title.`);
   }
-  if (typeof record.category !== "string" || !theme.categories.includes(record.category)) {
+  if (typeof record.category !== "string" || !theme.categories.includes(record.category as string)) {
     throw new Error("Choose a valid category.");
   }
   if (
     typeof record.dueDate !== "string" ||
-    !/^\d{4}-\d{2}-\d{2}$/.test(record.dueDate) ||
-    !isCalendarDay(record.dueDate)
+    !/^\d{4}-\d{2}-\d{2}$/.test(record.dueDate as string) ||
+    !isCalendarDay(record.dueDate as string)
   ) {
     throw new Error("Choose a valid date.");
   }
   if (
     typeof record.effort !== "number" ||
-    !Number.isFinite(record.effort) ||
-    record.effort < 1 ||
-    record.effort > 480
+    !Number.isFinite(record.effort as number) ||
+    (record.effort as number) < 1 ||
+    (record.effort as number) > 480
   ) {
     throw new Error("Effort must be a number between 1 and 480.");
   }
   if (
     typeof record.impact !== "number" ||
-    !Number.isInteger(record.impact) ||
-    record.impact < 1 ||
-    record.impact > 5
+    !Number.isInteger(record.impact as number) ||
+    (record.impact as number) < 1 ||
+    (record.impact as number) > 5
   ) {
     throw new Error("Impact must be an integer between 1 and 5.");
   }
@@ -70,10 +74,10 @@ function validateRecord(input: Partial<LifeRecord>, theme: ThemeConfig): LifeRec
   if (typeof record.notes !== "string") {
     throw new Error("notes must be a string.");
   }
-  if (typeof record.createdAt !== "string" || !isTimestamp(record.createdAt)) {
+  if (typeof record.createdAt !== "string" || !isTimestamp(record.createdAt as string)) {
     throw new Error("createdAt must be a valid timestamp.");
   }
-  if (typeof record.updatedAt !== "string" || !isTimestamp(record.updatedAt)) {
+  if (typeof record.updatedAt !== "string" || !isTimestamp(record.updatedAt as string)) {
     throw new Error("updatedAt must be a valid timestamp.");
   }
   if (record.pinned !== undefined && typeof record.pinned !== "boolean") {
@@ -91,16 +95,16 @@ function validateRecord(input: Partial<LifeRecord>, theme: ThemeConfig): LifeRec
 
   return {
     id,
-    title: record.title,
-    category: record.category,
-    dueDate: record.dueDate,
-    effort: record.effort,
-    impact: record.impact,
+    title: record.title as string,
+    category: record.category as string,
+    dueDate: record.dueDate as string,
+    effort: record.effort as number,
+    impact: record.impact as number,
     status: record.status as ItemStatus,
-    notes: record.notes,
-    createdAt: record.createdAt,
-    updatedAt: record.updatedAt,
-    pinned: record.pinned,
+    notes: record.notes as string,
+    createdAt: record.createdAt as string,
+    updatedAt: record.updatedAt as string,
+    pinned: record.pinned as boolean | undefined,
     recurrence: record.recurrence as RecurrenceType | undefined,
   };
 }
@@ -115,7 +119,11 @@ export function importJson(text: string, theme: ThemeConfig): LifeRecord[] {
   if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
     throw new Error("Unsupported backup format");
   }
-  const document = parsed as Record<string, unknown>;
+  const parsedObject = parsed as Record<string, unknown>;
+  const document = Object.create(null) as Record<string, unknown>;
+  for (const key of Object.keys(parsedObject)) {
+    document[key] = parsedObject[key];
+  }
   if (document.schema !== 1) {
     throw new Error("Unsupported backup format");
   }

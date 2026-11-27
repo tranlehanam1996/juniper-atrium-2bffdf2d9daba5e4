@@ -33,29 +33,33 @@ function isTimestamp(value: string): boolean {
 
 function isLifeRecord(value: unknown): value is LifeRecord {
   if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
-  const record = value as Record<string, unknown>;
+  const source = value as Record<string, unknown>;
+  const record = Object.create(null) as Record<string, unknown>;
+  for (const key of Object.keys(source)) {
+    record[key] = source[key];
+  }
   return (
     isNonEmptyString(record.id) &&
-    record.id.trim().length <= MAX_ID_LENGTH &&
+    (record.id as string).trim().length <= MAX_ID_LENGTH &&
     isNonEmptyString(record.title) &&
     isNonEmptyString(record.category) &&
     typeof record.dueDate === "string" &&
-    /^\d{4}-\d{2}-\d{2}$/.test(record.dueDate) &&
-    isCalendarDay(record.dueDate) &&
+    /^\d{4}-\d{2}-\d{2}$/.test(record.dueDate as string) &&
+    isCalendarDay(record.dueDate as string) &&
     typeof record.effort === "number" &&
-    Number.isFinite(record.effort) &&
-    record.effort >= 1 &&
-    record.effort <= 480 &&
+    Number.isFinite(record.effort as number) &&
+    (record.effort as number) >= 1 &&
+    (record.effort as number) <= 480 &&
     typeof record.impact === "number" &&
-    Number.isInteger(record.impact) &&
-    record.impact >= 1 &&
-    record.impact <= 5 &&
+    Number.isInteger(record.impact as number) &&
+    (record.impact as number) >= 1 &&
+    (record.impact as number) <= 5 &&
     (record.status === "planned" || record.status === "active" || record.status === "done") &&
     typeof record.notes === "string" &&
     typeof record.createdAt === "string" &&
-    isTimestamp(record.createdAt) &&
+    isTimestamp(record.createdAt as string) &&
     typeof record.updatedAt === "string" &&
-    isTimestamp(record.updatedAt) &&
+    isTimestamp(record.updatedAt as string) &&
     (record.pinned === undefined || typeof record.pinned === "boolean") &&
     (record.recurrence === undefined ||
       record.recurrence === "none" ||
@@ -67,11 +71,15 @@ function isLifeRecord(value: unknown): value is LifeRecord {
 
 function isStoreEnvelope(value: unknown): value is StoreEnvelope {
   if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
-  const envelope = value as Record<string, unknown>;
+  const source = value as Record<string, unknown>;
+  const envelope = Object.create(null) as Record<string, unknown>;
+  for (const key of Object.keys(source)) {
+    envelope[key] = source[key];
+  }
   if (envelope.version !== 1) return false;
   if (!Array.isArray(envelope.records)) return false;
-  if (typeof envelope.savedAt !== "string" || !isTimestamp(envelope.savedAt)) return false;
-  return envelope.records.every(isLifeRecord);
+  if (typeof envelope.savedAt !== "string" || !isTimestamp(envelope.savedAt as string)) return false;
+  return (envelope.records as unknown[]).every(isLifeRecord);
 }
 
 export class RecordStore {
@@ -159,19 +167,45 @@ export class RecordStore {
       return normalizedFallback;
     }
     if (raw === null) return normalizedFallback;
+    let parsed: unknown;
     try {
-      const parsed = JSON.parse(raw.replace(/^\uFEFF+/, "")) as unknown;
-      if (isStoreEnvelope(parsed)) {
-        const trimmedIds = parsed.records.map((record) => record.id.trim());
-        if (
-          trimmedIds.every((id) => id !== "" && id.length <= MAX_ID_LENGTH) &&
-          new Set(trimmedIds).size === trimmedIds.length
-        ) {
-          return parsed.records.map((record, index) => ({ ...record, id: trimmedIds[index] }));
-        }
-      }
+      parsed = JSON.parse(raw.replace(/^\uFEFF+/, "")) as unknown;
     } catch {
-      // Fall through to removal below.
+      try {
+        localStorage.removeItem(this.key);
+      } catch {
+        // Ignore storage cleanup failures.
+      }
+      return normalizedFallback;
+    }
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+      try {
+        localStorage.removeItem(this.key);
+      } catch {
+        // Ignore storage cleanup failures.
+      }
+      return normalizedFallback;
+    }
+    const parsedObject = parsed as Record<string, unknown>;
+    const envelope = Object.create(null) as Record<string, unknown>;
+    for (const key of Object.keys(parsedObject)) {
+      envelope[key] = parsedObject[key];
+    }
+    if (!isStoreEnvelope(envelope)) {
+      try {
+        localStorage.removeItem(this.key);
+      } catch {
+        // Ignore storage cleanup failures.
+      }
+      return normalizedFallback;
+    }
+    const storedRecords = envelope.records as LifeRecord[];
+    const trimmedIds = storedRecords.map((record) => record.id.trim());
+    if (
+      trimmedIds.every((id) => id !== "" && id.length <= MAX_ID_LENGTH) &&
+      new Set(trimmedIds).size === trimmedIds.length
+    ) {
+      return storedRecords.map((record, index) => ({ ...record, id: trimmedIds[index] }));
     }
     try {
       localStorage.removeItem(this.key);
