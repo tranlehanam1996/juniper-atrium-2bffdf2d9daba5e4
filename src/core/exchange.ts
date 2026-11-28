@@ -154,6 +154,7 @@ function parseCsv(text: string): string[][] {
   let field = "";
   let inQuotes = false;
   let quoted = false;
+  let atFieldStart = true;
   let i = 0;
   while (i < text.length) {
     const char = text[i];
@@ -161,6 +162,7 @@ function parseCsv(text: string): string[][] {
       if (char === '"') {
         if (text[i + 1] === '"') {
           field += '"';
+          atFieldStart = false;
           i += 2;
           continue;
         }
@@ -169,12 +171,14 @@ function parseCsv(text: string): string[][] {
         continue;
       }
       field += char;
+      atFieldStart = false;
       i += 1;
       continue;
     }
-    if (char === '"') {
+    if (char === '"' && atFieldStart) {
       inQuotes = true;
       quoted = true;
+      atFieldStart = false;
       i += 1;
       continue;
     }
@@ -182,6 +186,7 @@ function parseCsv(text: string): string[][] {
       row.push(field);
       field = "";
       quoted = false;
+      atFieldStart = true;
       i += 1;
       continue;
     }
@@ -191,12 +196,14 @@ function parseCsv(text: string): string[][] {
       row = [];
       field = "";
       quoted = false;
+      atFieldStart = true;
       i += 1;
       continue;
     }
     if (char === "\r") {
       if (text[i + 1] === "\n") {
         i += 1;
+        atFieldStart = true;
         continue;
       }
       row.push(field);
@@ -204,10 +211,17 @@ function parseCsv(text: string): string[][] {
       row = [];
       field = "";
       quoted = false;
+      atFieldStart = true;
+      i += 1;
+      continue;
+    }
+    if (char === " " || char === "\t") {
+      field += char;
       i += 1;
       continue;
     }
     field += char;
+    atFieldStart = false;
     i += 1;
   }
   if (inQuotes) {
